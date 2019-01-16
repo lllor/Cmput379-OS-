@@ -68,12 +68,12 @@ int main()
 //{ sigset_t  newmask, oldmask, pendmask; if (signal(SIGQUIT, sig_quit) == SIG_ERR) perror("can't catch SIGQUIT"); if (signal(SIGINT, sig_int) == SIG_ERR) perror("can't catch SIGINT"); sigemptyset(&newmask); /* 添加信号SIG_BLOCK和SIGINT至信号集*/ sigaddset(&newmask, SIGQUIT); sigaddset(&newmask, SIGINT); /* 设置为屏蔽这两个信号并保存当前的信号屏蔽字 */ if (sigprocmask(SIG_BLOCK, &newmask, &oldmask) < 0) perror("SIG_BLOCK error"); sleep(5);/*进程休眠期间将阻塞的信号放置信号阻塞队列中*/ if (sigpending(&pendmask) < 0) perror("sigpending error"); /*处理信号阻塞队列*/ if (sigismember(&pendmask, SIGQUIT)) printf("SIGQUIT pending\n"); if (sigismember(&pendmask, SIGINT)) printf("SIGINT pending\n"); /* 恢复最初的信号屏蔽字 */ if (sigprocmask(SIG_SETMASK, &oldmask, NULL) < 0) perror("SIG_SETMASK error"); fprintf(stderr,"SIGNAL unblocked\n"); sleep(5); exit(0); }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-/*static void sigHandler_sigusr1(int sig)
+static void sigHandler_sigusr1(int sig)
 {
     //sig contains the signal number that was received
     printf("Caught SIGUSR1, %d\n", getpid());
     //kill(getpid(), SIGUSR1);
-    //kill(getpid(), SIGUSR1);
+
 }
 
 static void sigHandler_sigusr2(int sig)
@@ -103,22 +103,19 @@ int main(int argc, char *argv[])
     if (signal(SIGINT, sigHandler_sigint) == SIG_ERR)
         printf("Unable to create handler for SIGINT\n");
 
-    //kill(getpid(), SIGUSR1);
-    (void) signal(SIGINT, sigHandler_sigusr1);
-    //kill(getpid(), SIGUSR2);
+    kill(getpid(), SIGUSR1);
+    //(void) signal(SIGUSR1, sigHandler_sigusr1);
+    kill(getpid(), SIGUSR2);
     //kill(getpid(), SIGINT);
 
-    while (1)
-    {
-        sleep(1);
-    }
+    
 
     return 0;
-}*/
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
 int main(int argc, char* const argv[])
 {
         struct sigaction act;
@@ -147,7 +144,7 @@ int main(int argc, char* const argv[])
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 void myFun(int,siginfo_t*,void *p);
-
+/*
 int main(int argc,char* argv[])
 {
   struct sigaction act;
@@ -155,7 +152,7 @@ int main(int argc,char* argv[])
   pid_t pid;
   pid = getpid();
   printf("pid is: %d\n",pid);
-
+/*
   act.sa_sigaction = myFun;
   act.sa_flags = SA_SIGINFO;
 
@@ -175,7 +172,7 @@ void sig_action(int signo, siginfo_t *info, void *addr)
  {
   printf("%s\n", (char*)info->si_value.sival_ptr);
  }
-
+*/
 
 
 

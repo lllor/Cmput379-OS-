@@ -1,41 +1,120 @@
 /*html:blog.51cto.com/10638473/1983100
-使用sigqueue函数向进程自身发送一个SIGUSR1信号，
-并获取该信号的信号值
+operate: 
+gcc -o test4 oneprocess.c
+./test4
+(show process PID)
+123456(doesnt matter, must integer)
+(Show get a Signal)
+**why enter a new line again will not send a SIGUSR1 to current process
+**but SIGINT works fine
 */
 #include<stdio.h>
 #include<signal.h>
 #include<stdlib.h>
 #include <unistd.h>
-//SIGUSR1的处理函数
+//deal with SIGUSR1
 void signalDeal(int signo,siginfo_t *info,void *context)
 {
     char *pMsg=(char*)info->si_value.sival_ptr;
-    printf("接收到的信号标号是:%d\n", signo);
-    printf("接收到信息:%s\n", pMsg);
+    printf("recieved signal:%d\n", signo);
+    printf("recieved message:%s\n", pMsg);
 }
-//主函数
+//SIGINT
+void testSignal(int sig)
+{
+    printf("Get a signal %d\n",sig);
+    
+}
+//SIGINT
+void testSignal2(int sig)
+{
+    printf("Get a user defined signal %d\n",sig);
+    
+}
+
+//main function
 int main(int argc,char *argv[])
 {
-    struct sigaction sigAct;
-    sigAct.sa_flags = SA_SIGINFO;
+    struct sigaction sigAct; //init a sigaction
+    sigAct.sa_flags = SA_SIGINFO;//format?
     sigAct.sa_sigaction = signalDeal;
-    
+
     if(sigaction(SIGUSR1,&sigAct,NULL)==-1)
     {
-        printf("sigaction函数调用失败!\n");
+        printf("sigaction failed!\n");
         exit(1);
     }
     sigval_t val;
+    char pMsg[2048]="Hello worls";
+    val.sival_ptr = pMsg;
     
-    char pMsg[2048];
-    char temp;
-    temp = getchar();
+    
+    int other= -1;
+    printf("Own PID:%d\n",getpid());
+    
+    while (other == -1)
+    {
+        scanf("%d",&other);
+
+    }
+    
+    wait(NULL)
+    char temp = getchar();
+
+
+    if(signal(SIGINT,testSignal)== SIG_ERR){
+        printf("usr1 error");
+    }
+    //if(signal(SIGUSR1,signalDeal)==SIG_ERR){
+    //    printf("usr2 error");
+    //}
+    if(sigqueue(other,SIGUSR1,val) == -1)
+    {
+        printf("sigqueue faild!\n");
+        exit(1);
+    }
+
+    //kill(getpid(),SIGINT);
+    //kill(getpid(),SIGUSR1);
+
+    
+    
+    
+
+
+   
+    
+    //char temp;
+    //temp = getchar();
+   // temp = getchar();
     int i=0,c;
-    while (temp!='.')
+
+/*    int integer;
+    int result = scanf("%d",&integer);
+    if (result>0){
+        while (i<2047 && (c=getchar())!='\n'){
+            pMsg[i++] = c;
+        }
+        pMsg[i] = 0;
+            
+        val.sival_ptr = pMsg;
+    }
+    sleep(5);
+    
+    val.sival_ptr = pMsg;
+
+
+    /*if(sigqueue(other,SIGUSR1,val) == -1)
+    {
+        printf("sigqueue faild!\n");
+        exit(1);
+    }*/
+/*    while (temp!='.')
     {
         if (temp == '!'){
-            
-            //printf("valid send message\n");
+            char pMsg[2048] = {0};
+            i = 0;
+            printf("valid send message\n");
             temp = getchar();
             while (i<2047 && (c=getchar())!='\n'){
                 pMsg[i++] = c;
@@ -44,30 +123,25 @@ int main(int argc,char *argv[])
             
             val.sival_ptr = pMsg;
             
-            if(sigqueue(getpid(),SIGUSR1,val) == -1)
+            if(sigqueue(other,SIGUSR1,val) == -1)
             {
                 printf("sigqueue faild!\n");
                 exit(1);
             }
-            
-            temp = getchar();
-	    for ( i=0;i<2048;i++ ) pMsg[i]=0;
+            //temp = getchar();
+	        
         }
 	
         else{
             printf("invalid sending message\n");
-	    temp = getchar();
-            for ( i=0;i<2047;i++ ) pMsg[i]=0;
+	        exit(1);
         }
     }
 
-
-
-
-
-
-
-    
-    
+*/
+    while (1)
+    {
+        sleep(1);
+    }
     return 0;
 }
