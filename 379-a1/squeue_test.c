@@ -43,15 +43,14 @@ int main()
   initSqueue(&s1);
   //Squeue should be empty
   assert(isEmpty(s1));
-  //strcpy(newNode->val,"hello");
-  //addFront(s1, "Hello");
-  //We just added "Hello", so it shouldn't be empty
- // assert(!isEmpty(s1));
   addBack(s1, 'w');
   //printf("%s",s1->first->val);
   //We should have "Hello", "World!" in the Squeue in that order.
   
   assert(peekFront(s1) == 'w');
+  
+  addBack(s1, 'q')
+  assert(peekFront(s1)=='w');
   //assert(strcmp(peekBack(s1), 'w') == 0);
   return 0;
 }

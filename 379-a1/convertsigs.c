@@ -70,21 +70,29 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       convert(message[i], sendChar);
       for(int a = 0; a < 8; a++) {
         if(sendChar[a] == '0') {
+          printf("Send Siguser2");
           kill(pid, SIGUSR2);
         }
         else {
+          printf("Send siguser1");
           kill(pid, SIGUSR1);
         }
         usleep(50000);
       }
     }
+    
+    for(int a = 0; a<8 ; a++){
+      kill(pid,SIGUSR1);
+    }
+    
   }
   void handler(int signal_val) {
-    //printf("12");
     switch(signal_val){
       case SIGUSR1:
+       // printf("Recieved SIGUSR1,%d\n",counter);
         addBack(buffer,'1');
       case SIGUSR2:
+       // printf("Recieved SIGUSR2,%d\n",counter);
         addBack(buffer,'0');
     }
     counter++;
@@ -103,7 +111,6 @@ int receive() {
       temp[i] = peekFront(buffer);
     }
     printf("%s\n",temp);
-    printf("%s\n",flag);
     if (strcmp(temp, flag) == 0) {
       return 1;
     }
@@ -115,7 +122,6 @@ int receive() {
 int main(void) {
   initSqueue(&buffer);
   initSqueue(&message);
-  
   
   struct sigaction sa;
   sa.sa_handler = handler;
@@ -133,11 +139,11 @@ int main(void) {
   
   while(1){
     send("interest",8, otherpid);
-    printf("%d",counter);
-    if(receive()==1){
-      printf("I'm in");
-      printf("%c",peekFront(message));
-    }
+   // printf("%d",counter);
+    //if(receive()==1){
+      //printf("I'm in");
+      //printf("%c",peekFront(message));
+   // }
     exit(1);
   }
   
