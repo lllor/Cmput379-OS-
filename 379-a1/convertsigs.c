@@ -4,14 +4,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdlib.h>
-#include <queue.h>
+#include "squeue.h"
 #include <math.h>
 
 #include <errno.h> //may not use
 
 
-queue<char> buffer;
-queue<char> message;
+Squeue *buffer;
+Squeue *message;
 int counter = 0;
 
 char *convert(char a, char *result){
@@ -56,7 +56,7 @@ char convertBack(char[] a) { // a have to be an array with 8 element
     }
   }
   void handler(int signal_val, char biNum) {
-    buffer.push(biNum);
+    buffer.addBack(biNum);
     counter++;
   }
 
@@ -80,9 +80,9 @@ char convertBack(char[] a) { // a have to be an array with 8 element
   void handler(int signal_val) {
     switch(signal_val){
       case SIGUSR1:
-        buffer.push('1');
+        addBack(buffer,'1');
       case SIGUSR2:
-        buffer.push('0');
+        addBack(buffer,'0');
     }
     counter++;
   }
@@ -94,12 +94,12 @@ int receive() {
     counter -= 8;
     char temp[8];
     for(int i = 0; i < 8; i++) {
-      temp[i] = buffer.pop();
+      temp[i] = peekFront(buffer);
     }
     if(temp == {1,1,1,1,1,1,1,1}) {
       return 1;
     }
-    message.push(convertBack(temp));
+    addBack(message,convertBack(temp));
   }
   return 0;
 }
