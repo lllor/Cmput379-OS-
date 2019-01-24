@@ -34,10 +34,11 @@ char *convert(char a, char *result){
 }
 
 char convertBack(char a[] ) { // a have to be an array with 8 element
+  
   int result=0;
   for(int i = 7; i >= 0; i--) {
     if(a[i] == '1') {
-      result += pow(2,i);
+      result += pow(2,(7-i));
     }
   }
   return (char)result;
@@ -65,53 +66,73 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
 #else
   void send(char message[], int length, pid_t pid) {
+    int count=0;
+    //printf("%s\n",message);
     for(int i = 0; i < length; i++) {
+      //printf("%c\n",message[i]);
       char sendChar[8];
       convert(message[i], sendChar);
       for(int a = 0; a < 8; a++) {
         if(sendChar[a] == '0') {
-          printf("Send Siguser2");
+          //printf("Send Siguser2,%d\n",counter);
           kill(pid, SIGUSR2);
+          //counter++;
         }
         else {
-          printf("Send siguser1");
+          //printf("Send siguser1,%d\n",counter);
           kill(pid, SIGUSR1);
+          //counter++;
         }
+        //sleep(1);
         usleep(50000);
       }
     }
     
     for(int a = 0; a<8 ; a++){
+      //printf("Send siguser1 for end,%d\n",counter);
       kill(pid,SIGUSR1);
     }
     
+    
+    
   }
   void handler(int signal_val) {
+    //printf("%d",counter);
     switch(signal_val){
       case SIGUSR1:
-       // printf("Recieved SIGUSR1,%d\n",counter);
+        //printf("Recieved SIGUSR1,%d\n",counter);
         addBack(buffer,'1');
+        break;
       case SIGUSR2:
-       // printf("Recieved SIGUSR2,%d\n",counter);
+        //printf("Recieved SIGUSR2,%d\n",counter);
         addBack(buffer,'0');
+        break;
     }
+    //sleep(1);
     counter++;
   }
 #endif
 
 
 int receive() {
-  printf("receive\n");
+ // print(buffer,'f');
+  //printf("receive\n");
+  //leaveFront(buffer);
+  
+  
   char flag[8]={'1','1','1','1','1','1','1','1'};
-  while(counter > 8) {
+  while(counter%8 == 0) {
     counter -= 8;
     char temp[8];
     
     for(int i = 0; i < 8; i++) {
       temp[i] = peekFront(buffer);
+      leaveFront(buffer);
     }
-    printf("%s\n",temp);
-    if (strcmp(temp, flag) == 0) {
+    
+    
+    if (temp[0] == '1' && temp[1] == '1' && temp[2] == '1' && temp[3] == '1'
+     && temp[4] == '1' && temp[5] == '1' && temp[6] == '1' && temp[7] == '1') {
       return 1;
     }
     addBack(message,convertBack(temp));
@@ -136,19 +157,40 @@ int main(void) {
   printf("Own PID: %d\n",mypid);
   pid_t otherpid;
   scanf("%d", &otherpid);
-  
+  char waste = getchar();
   while(1){
-    send("interest",8, otherpid);
-   // printf("%d",counter);
-    //if(receive()==1){
-      //printf("I'm in");
-      //printf("%c",peekFront(message));
-   // }
-    exit(1);
+    char input[4096]={0};
+    int i = 0;
+    char ch;
+    
+    while((ch = getchar()) != '\n') {
+          input[i++] = ch;
+    }
+    
+    //
+    //printf("%s\n",input);
+    
+    
+    
+      
+    send(input,strlen(input)+1, otherpid);
+    if(receive()==1){
+      print(message,'f');
+      printf("\n");
+      nuke(message);
+      nuke(buffer);
+    }
+    
+    counter = 0;
+    usleep(50000);
+    //exit(1);
+
+    }
+    
+    
   }
   
   
   
   
-  //while(1);
-}
+

@@ -56,7 +56,60 @@ void addBack (Squeue *squeue, char val)
 }
 char peekFront (const Squeue *squeue)	
 {
-	assert (!isEmpty(squeue));
+	//assert (!isEmpty(squeue));
 	return ((squeue->first)->val);					//to get the val of the first element
-}	
+}
+void nuke (Squeue *squeue)
+{
+	while((squeue)->first!=NULL)					//free the memort til the squeue is empty
+	{
+		leaveFront(squeue);
+	}
+}
+void leaveFront (Squeue *squeue)		
+{
+	assert(!isEmpty(squeue));					//make sure this is not an empty squeue
+	if(squeue->first==squeue->last)					//if there is only one nodes
+	{
+		//free(squeue->first->val);				//free the memory
+		//free(squeue->first);
+		squeue->first=NULL;					//set the squeue as empty
+		squeue->last=NULL;
+	}
+	else
+	{
+		struct Node *temp=squeue->first->next;			//else bulid a temp to store the first->next
+		//free(squeue->first->val);				//free the memory
+		//free(squeue->first);
+		squeue->first=temp;					//set the first->next as first
+		squeue->first->prev=NULL;
+	}
+}
+void print (const Squeue *squeue, char direction)
+{
+	
+	if (direction=='f')						//print in order
+	{
+		printf("stack is:\n");
+		struct Node *pp=squeue->first;				//begin with the first element
+		while(pp!=NULL)						//til the end
+		{
+			printf("%c",pp->val);
+			pp=pp->next;
+		}
+		printf("\n");
+	}
+	else if(direction=='r')						//print in reverse
+	{
+		printf("stack is:\n");
+		struct Node *pp=squeue->last;				//begin with the last
+		while(pp!=NULL)
+		{
+			printf("\t%c\n",pp->val);			
+			pp=pp->prev;
+		}
+	}
+	else
+		fprintf(stderr,"Error, illegal direction <%c>",direction);
+}
 
