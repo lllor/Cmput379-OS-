@@ -4,6 +4,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <queue.h>
+#include <math.h>
+
+#include <errno.h> //may not use
+
+
+queue<char> buffer;
+queue<char> message;
+int counter = 0;
 
 char *convert(char a, char *result){
   int asciiNum = (int)a;
@@ -22,6 +31,17 @@ char *convert(char a, char *result){
   //printf("%s\n", result);
 }
 
+char convertBack(char[] a) { // a have to be an array with 8 element
+  int result;
+  for(int i = 7; i >= 0; i--) {
+    if(a[i] == 1) {
+      result += pow(2,i);
+    }
+  }
+  return (char)result;
+}
+
+
 #ifdef SINGLE
   void send(char message[], int length, pid_t pid) {
     for(int i = 0; i < length; i++) {
@@ -35,6 +55,12 @@ char *convert(char a, char *result){
       }
     }
   }
+  void handler(int signal_val, char biNum) {
+    buffer.push(biNum);
+    counter++;
+  }
+
+
 #else
   void send(char message[], int length, pid_t pid) {
     for(int i = 0; i < length; i++) {
@@ -51,7 +77,32 @@ char *convert(char a, char *result){
       }
     }
   }
+  void handler(int signal_val) {
+    switch(signal_val){
+      case SIGUSR1:
+        buffer.push('1');
+      case SIGUSR2:
+        buffer.push('0');
+    }
+    counter++;
+  }
 #endif
+
+
+int receive() {
+  while(counter > 8) {
+    counter -= 8;
+    char temp[8];
+    for(int i = 0; i < 8; i++) {
+      temp[i] = buffer.pop();
+    }
+    if(temp == {1,1,1,1,1,1,1,1}) {
+      return 1;
+    }
+    message.push(convertBack(temp));
+  }
+  return 0;
+}
 
 int main(void) {
   pid_t mypid = getpid();
