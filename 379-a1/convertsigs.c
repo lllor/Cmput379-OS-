@@ -110,5 +110,5 @@ int main(void) {
   pid_t otherpid;
   scanf("%d", &otherpid);
   send("interest",8, otherpid);
-  //while(1);
+  while(1);
 }
