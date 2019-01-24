@@ -24,41 +24,16 @@ bool isEmpty (const Squeue *squeue)
 		return true;
 	return false;
 }
-void addFront (Squeue *squeue, char *val)
-{
-	if(isEmpty(squeue))						//if this is a empty squeue
-	{
-		struct Node *newNode;
-		newNode = malloc(sizeof(struct Node));			//we malloc a space for the node
-		char *a=malloc(strlen(val)+1);				//we also malloc a space for the val
-		strcpy(a,val);						//get the val
-		newNode->val=a;						//assigned the val to the node
-		newNode->prev=NULL;					//there is only one node, so prev==NULL
-		newNode->next=squeue->first;				//the next it NULL
-		squeue->first=newNode;					//now, the first/last element in the squeue is same
-		squeue->last=newNode;
-	}       
-	else
-	{
-		struct Node *newNode;					//if this is not an empty squeue
-		newNode = malloc(sizeof(struct Node));			
-		char *a=malloc(strlen(val)+1);
-		strcpy(a,val);
-		newNode->val=a;						
-		newNode->prev=NULL;					//this is a addFront function, will never have a front node
-		newNode->next=squeue->first;				//set this node as the first element
-		squeue->first->prev=newNode;				//set other nodes after it
-		squeue->first=newNode;
-	}       
-} 
+
 void addBack (Squeue *squeue, char val)
 {
 	if(isEmpty(squeue))						//if this is a empty squeue
 	{
 		struct Node *newNode;
 		newNode = malloc(sizeof(struct Node));
-		char a=malloc(strlen(val)+1);
-		strcpy(a,val);
+		//char a=malloc(1+1);
+		//strcpy(a,val);
+		char a = val;
 		newNode->val=a;
 		newNode->next=NULL;
 		newNode->prev=squeue->last;
@@ -69,8 +44,9 @@ void addBack (Squeue *squeue, char val)
 	{								//if this is not an empty squeue
 		struct Node *newNode;
 		newNode = malloc(sizeof(struct Node));
-		char a=malloc(strlen(val)+1);
-		strcpy(a,val);
+		//char *a=malloc(1+1);
+		char a = val;
+		//strcpy(a,val);
 		newNode->val=a;
 		newNode->next=NULL;					//this is a addBack function, will never have a next node
 		newNode->prev=squeue->last;				//set this node as the last element
@@ -83,131 +59,4 @@ char peekFront (const Squeue *squeue)
 	assert (!isEmpty(squeue));
 	return ((squeue->first)->val);					//to get the val of the first element
 }	
-char* peekBack (const Squeue *squeue)
-{
-	assert (!isEmpty(squeue));
-	return ((squeue->last)->val);					//to get the val of the last element
-}      
-void mergeFront(Squeue *squeue)
-{
-	assert(squeue->first!=squeue->last);				//make sure there is at least element in the queue
-	char *a=squeue->first->val;
-	char *b=squeue->first->next->val;
-	char *c=(char *)malloc(1+strlen(a)+strlen(b));			//assigned enough space to cat two string
-	strcpy(c,a);
-	strcat(c,b);
-	leaveFront(squeue);						//delet the first two node
-        leaveFront(squeue);
-        addFront(squeue,c);						//add c as the first node
-        free(c);							//free c
-//	squeue->first->val=c;
-}
-void print (const Squeue *squeue, char direction)
-{
-	
-	if (direction=='f')						//print in order
-	{
-		printf("stack is:\n");
-		struct Node *pp=squeue->first;				//begin with the first element
-		while(pp!=NULL)						//til the end
-		{
-			printf("\t%s\n",pp->val);
-			pp=pp->next;
-		}
-	}
-	else if(direction=='r')						//print in reverse
-	{
-		printf("stack is:\n");
-		struct Node *pp=squeue->last;				//begin with the last
-		while(pp!=NULL)
-		{
-			printf("\t%s\n",pp->val);			
-			pp=pp->prev;
-		}
-	}
-	else
-		fprintf(stderr,"Error, illegal direction <%c>",direction);
-}
-void reverse(Squeue *squeue)
-{
-	Squeue *new=malloc(sizeof(Squeue));				//build a new squeue
-	new->first=NULL;
-	new->last=NULL;
-	while((squeue)->first!=NULL)					//store all node from squeue, peekfront but add to the end
-	{
-		addBack(new,peekFront(squeue));
-		leaveFront(squeue);					//empty the original squeue
-	}
-	while((new)->first!=NULL)					//store all node form temp squeue into orignal squeue
-	{
-		addFront(squeue,peekFront(new));
-		leaveFront(new);
-	}
-	free(new);							//free
-}
-void leaveFront (Squeue *squeue)		
-{
-	assert(!isEmpty(squeue));					//make sure this is not an empty squeue
-	if(squeue->first==squeue->last)					//if there is only one nodes
-	{
-		free(squeue->first->val);				//free the memory
-		free(squeue->first);
-		squeue->first=NULL;					//set the squeue as empty
-		squeue->last=NULL;
-	}
-	else
-	{
-		struct Node *temp=squeue->first->next;			//else bulid a temp to store the first->next
-		free(squeue->first->val);				//free the memory
-		free(squeue->first);
-		squeue->first=temp;					//set the first->next as first
-		squeue->first->prev=NULL;
-	}
-}
-void mergeBack(Squeue *squeue)
-{       
-	assert(squeue->first!=squeue->last);				//make sure there is at least two element in the queue
-	char *a=squeue->last->val;
-	char *b=squeue->last->prev->val;
-	char *c=(char *)malloc(1+strlen(a)+strlen(b));			//assigned enough space to cat two string
-	strcpy(c,b);
-	strcat(c,a);
-	leaveBack(squeue);						//delet the last two node
-	leaveBack(squeue);
-	addBack(squeue,c);						//add c as the last node
-	free(c);
-}
-void leaveBack (Squeue *squeue)
-{
-	assert(!isEmpty(squeue));					//make sure this is not an empty squeue
-	if(squeue->first==squeue->last)					//if there is only one nodes
-	{
-		free(squeue->last->val);
-		free(squeue->last);					//free the memory
-		squeue->first=NULL;
-		squeue->last=NULL;					//set the squeue as empty 
-	}
-	else
-	{
-		struct Node *temp=squeue->last->prev;			//else bulid a temp to store the last->prev
-		free(squeue->last->val);
-		free(squeue->last);					//free the memory
-		squeue->last=temp;
-		squeue->last->next=NULL;				//set the last->prev as last
-//              free(squeue->last->next);
-	}
 
-}	
-void nuke (Squeue *squeue)
-{
-	while((squeue)->first!=NULL)					//free the memort til the squeue is empty
-	{
-		leaveFront(squeue);
-	}
-}
-void destroySqueue(Squeue **squeue)
-{
-        nuke(*squeue);							//free memory
-	free(*squeue);							//free squeue itself
-//      squeue=NULL;
-}

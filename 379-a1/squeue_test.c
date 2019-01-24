@@ -44,34 +44,14 @@ int main()
   //Squeue should be empty
   assert(isEmpty(s1));
   //strcpy(newNode->val,"hello");
-  addFront(s1, "Hello");
+  //addFront(s1, "Hello");
   //We just added "Hello", so it shouldn't be empty
  // assert(!isEmpty(s1));
   addBack(s1, 'w');
   //printf("%s",s1->first->val);
   //We should have "Hello", "World!" in the Squeue in that order.
   
-  assert(strcmp(peekFront(s1), "Hello") == 0);
-  assert(strcmp(peekBack(s1), 'w') == 0);
-//  printf("%s",s1->last->val);
-  //We are going to merge "Hello" with "World!"
-//  mergeFront(s1);
-//  printf("%s",peekFront(s1));
-//  assert(strcmp(peekFront(s1), "HelloWorld!") == 0);
-  //We have only one element so the front and back of the squeue should be equal
-//  assert(strcmp(peekFront(s1), peekBack(s1)) == 0);
-//  addFront(s1, "Hola");
- // addBack(s1, "Mundo!");
- // print(s1, 'f');
- // reverse(s1);
- // print(s1, 'r');
- // assert(strcmp(peekFront(s1), "Mundo!") == 0);
- // assert(strcmp(peekBack(s1), "Hola") == 0);
- // leaveFront(s1);
- // assert(strcmp(peekFront(s1), "HelloWorld!") == 0);
- // nuke(s1);
-  //We just nuked our Squeue, so it should be empty
- // assert(isEmpty(s1));
- // destroySqueue(&s1);
+  assert(peekFront(s1) == 'w');
+  //assert(strcmp(peekBack(s1), 'w') == 0);
   return 0;
 }
