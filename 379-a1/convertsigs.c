@@ -110,7 +110,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       int numZero = (int)(tv.tv_sec * 1000000 + tv.tv_usec - lastTime)/50000;
      // printf("numZero = %d\n",numZero);
       for(int temp = 0; temp < numZero; temp++) {
-      	printf("I Recieved '0'\n");
+      	//printf("I Recieved '0'\n");
         addBack(buffer, '0');
         counter++;
         
@@ -165,7 +165,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         }
     }
     
-    print(buffer,'f');
+    //print(buffer,'f');
 
     
     return;
