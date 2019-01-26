@@ -77,7 +77,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       kill(pid, SIGUSR1);
       usleep(50000);
     }
-    //printf("Send over\n");
+    printf("Send over\n");
   }
 
   void getmessage(){
@@ -106,29 +106,30 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       lastTime = tv.tv_sec * 1000000 + tv.tv_usec;
     }
     else {
-      // segmentation error before here
       gettimeofday(&tv, NULL);
       int numZero = (int)(tv.tv_sec * 1000000 + tv.tv_usec - lastTime)/50000;
      // printf("numZero = %d\n",numZero);
       for(int temp = 0; temp < numZero; temp++) {
-      //	printf("I Recieved '0'\n");
+      	printf("I Recieved '0'\n");
         addBack(buffer, '0');
         counter++;
-
+        
         if (counter%8 == 0 && counter != 0){
           counter -= 8;
           char tempp[8];
+          //print(buffer,'f');
           for(int i = 0; i < 8; i++) {
             tempp[i] = peekFront(buffer);
             leaveFront(buffer);
-            //print(buffer,'f');
           }
 
           if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
            && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
+            state = 0;
             print(message,'f');
             nuke(buffer);
             nuke(message);
+         	lastTime = 0;
             return;
           }
 
@@ -143,17 +144,19 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       if (counter%8 == 0 && counter != 0){
           counter -= 8;
           char tempp[8];
+          //print(buffer,'f');
           for(int i = 0; i < 8; i++) {
             tempp[i] = peekFront(buffer);
             leaveFront(buffer);
-            //print(buffer,'f');
           }
 
           if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
            && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
+           	state = 0;
             print(message,'f');
             nuke(buffer);
             nuke(message);
+            lastTime = 0;
             return;
           }
 
@@ -161,9 +164,8 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
         }
     }
-    //if (counter%8 == 0 && counter != 0){
-    //printf("I'm ok here, counter: %d\n",counter);
-
+    
+    print(buffer,'f');
 
     
     return;
@@ -274,7 +276,7 @@ int main(void) {
 
 
     //sleep(1);
-    usleep(100000);
+    usleep(10000);
     //exit(1);
 
     }
