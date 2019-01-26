@@ -14,5 +14,6 @@ void testS(){
 int main(){
 	printf("aa");
 	testS();
+	
 	return 0;
 }
