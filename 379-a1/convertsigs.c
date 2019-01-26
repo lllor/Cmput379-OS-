@@ -16,7 +16,7 @@
 Squeue *buffer=NULL;
 Squeue *message=NULL;
 int counter = 0;
-
+int counter_single = 0;
 
 
 char *convert(char a, char *result){
@@ -67,7 +67,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         if(sendChar[a] == '1') {
           kill(pid, SIGUSR1);
         }
-        usleep(5000);
+        usleep(50000);
       }
     }
 
@@ -75,14 +75,29 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
     for(int start = 0; start < 8; start++) {
       kill(pid, SIGUSR1);
-      usleep(5000);
+      usleep(50000);
     }
     //printf("Send over\n");
   }
+
+  void getmessage(){
+  	char tempp[8];
+    for(int i = 0; i < 8; i++) {
+        tempp[i] = peekFront(buffer);
+        leaveFront(buffer);
+    }
+    if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
+       && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1')
+    	{
+    		return;
+    	}
+    addBack(message,convertBack(tempp));
+    getmessage();
+    //return;
+  }
   
   void handler(int signal_val) {
-  	//printf("state is %d\n",state);
-    
+    //char tempp[8];
     // no segmental error here
     if(state == 0) {
       state = 1;
@@ -93,44 +108,65 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
     else {
       // segmentation error before here
       gettimeofday(&tv, NULL);
-      int numZero = (int)(tv.tv_sec * 1000000 + tv.tv_usec - lastTime)/5000;
+      int numZero = (int)(tv.tv_sec * 1000000 + tv.tv_usec - lastTime)/50000;
      // printf("numZero = %d\n",numZero);
       for(int temp = 0; temp < numZero; temp++) {
       //	printf("I Recieved '0'\n");
         addBack(buffer, '0');
         counter++;
-      }
+
+        if (counter%8 == 0 && counter != 0){
+          counter -= 8;
+          char tempp[8];
+          for(int i = 0; i < 8; i++) {
+            tempp[i] = peekFront(buffer);
+            leaveFront(buffer);
+            //print(buffer,'f');
+          }
+
+          if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
+           && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
+            print(message,'f');
+            nuke(buffer);
+            nuke(message);
+            return;
+          }
+
+          addBack(message,convertBack(tempp));
+
+        }
+	  }
       addBack(buffer,'1');
       counter ++;
-      lastTime += (numZero+1) * 5000;
+      lastTime += (numZero+1) * 50000;
+
+      if (counter%8 == 0 && counter != 0){
+          counter -= 8;
+          char tempp[8];
+          for(int i = 0; i < 8; i++) {
+            tempp[i] = peekFront(buffer);
+            leaveFront(buffer);
+            //print(buffer,'f');
+          }
+
+          if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
+           && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
+            print(message,'f');
+            nuke(buffer);
+            nuke(message);
+            return;
+          }
+
+          addBack(message,convertBack(tempp));
+
+        }
     }
-   // print(buffer,'f');
-   // printf("counter = %d\n",counter);
+    //if (counter%8 == 0 && counter != 0){
+    //printf("I'm ok here, counter: %d\n",counter);
+
+
     
-    // segmental error before here
-    if (counter%8 == 0 && counter != 0){
-      counter -= 8;
-      char tempp[8];
-      //printf("I'm ok here");
-      for(int i = 0; i < 8; i++) {
-        tempp[i] = peekFront(buffer);
-        leaveFront(buffer);
-      }
-
-      if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
-       && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
-        state = 0;
-    	//printf("Recieved over\n");
-        print(message,'f');
-        nuke(buffer);
-        nuke(message);
-        //print(message,'f');
-        return;
-      }
-
-      addBack(message,convertBack(tempp));
-
-    }
+    return;
   }
 
 
@@ -180,6 +216,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       for(int i = 0; i < 8; i++) {
         temp[i] = peekFront(buffer);
         leaveFront(buffer);
+        //print(buffer,'f');
       }
 
       if (temp[0] == '1' && temp[1] == '1' && temp[2] == '1' && temp[3] == '1'
@@ -188,7 +225,6 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         nuke(buffer);
         nuke(message);
         return;
-        //print(message,'f');
       }
 
       addBack(message,convertBack(temp));
@@ -238,7 +274,7 @@ int main(void) {
 
 
     //sleep(1);
-    usleep(10000);
+    usleep(100000);
     //exit(1);
 
     }
@@ -271,3 +307,57 @@ int main(void) {
   }
   return 0;
 }*/
+/*
+
+      
+      printf("%s\n",tempp);
+
+      if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
+       && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') 
+      {
+      	printf("In\n");
+      	//print(buffer,'f');
+        //state = 0;
+    	
+    	//getmessage();
+		
+		//print(message,'f');
+        //print(buffer,'f');
+        //nuke(buffer);
+        //nuke(message);
+        //
+        //lastTime = 0;
+        //printf("end");
+        //return;
+      }
+      
+
+     // addBack(message,convertBack(tempp));
+	
+    }
+
+
+
+
+
+
+        if (counter >7){
+    	int num = 0;
+    	struct Node *pp = buffer -> last;
+    	while (num<8)
+    	{
+   		  tempp[num] = pp->val;
+    	  pp=pp->prev;
+    	  num ++;
+    	}
+    	printf("%s\n",tempp);
+   	    if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
+    	   	&& tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1')
+    	{
+    		printf("In\n");
+    	}
+    	for(int i=0;i<8;i++){
+      		tempp[i]='0';
+    	}
+    //}
+    }*/

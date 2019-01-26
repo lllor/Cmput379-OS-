@@ -49,7 +49,7 @@ bool isEmpty (const Squeue *squeue);
 void addFront (Squeue *squeue, char* val);
 void addBack (Squeue *squeue, char val);
 void leaveFront (Squeue *squeue);
-char* peekBack (const Squeue *squeue);
+char peekBack (const Squeue *squeue);
 void leaveBack (Squeue *squeue);
 char peekFront (const Squeue *squeue);
 void print (const Squeue *squeue, char direction);

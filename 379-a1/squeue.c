@@ -56,8 +56,13 @@ void addBack (Squeue *squeue, char val)
 }
 char peekFront (const Squeue *squeue)	
 {
-	//assert (!isEmpty(squeue));
+	assert (!isEmpty(squeue));
 	return ((squeue->first)->val);					//to get the val of the first element
+}
+char peekBack (const Squeue *squeue)
+{
+	assert (!isEmpty(squeue));
+	return ((squeue->last)->val);					//to get the val of the last element
 }
 void nuke (Squeue *squeue)
 {
@@ -87,7 +92,7 @@ void leaveFront (Squeue *squeue)
 }
 void print (const Squeue *squeue, char direction)
 {
-	
+	//assert(!isEmpty(squeue));
 	if (direction=='f')						//print in order
 	{
 		printf("stack is:\n");
