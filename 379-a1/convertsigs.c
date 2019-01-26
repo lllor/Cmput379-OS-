@@ -34,7 +34,7 @@ char *convert(char a, char *result){
 }
 
 char convertBack(char a[] ) { // a have to be an array with 8 element
-  
+
   int result=0;
   for(int i = 7; i >= 0; i--) {
     if(a[i] == '1') {
@@ -46,10 +46,20 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
 
 #ifdef SINGLE
+
+  struct time_val;
+  long lastTime;
+  int state = 0;
+
   void send(char message[], int length, pid_t pid) {
+    //wake other process up
+    kill(pid, SIGUSR1);
+    usleep(25000);
+
     for(int i = 0; i < length; i++) {
       char sendChar[8];
       convert(message[i], sendChar);
+
       for(int a = 0; a < 8; a++) {
         if(sendChar[a] == '0') {
           kill(pid, SIGUSR1);
@@ -57,11 +67,53 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         usleep(50000);
       }
     }
+
+    // end signal
+
+    for(int start = 0; start < 8; start++) {
+      kill(pid, SIGUSR1);
+      usleep(50000);
+    }
   }
-  void handler(int signal_val, char biNum) {
-    buffer.addBack(biNum);
-    counter++;
+  void handler(int signal_val) {
+    if(state == 0) {
+      state = 1;
+      gettimeoftheday(&time_val, NULL);
+      lastTime = time_val.tv_sec * 1000000 + time_val.tv_usec;
+    }
+    else {
+      gettimeoftheday(&time_val, NULL);
+      int numZero = (int)(time_val.tv_sec * 1000000 + time_val.tv_usec - lastTime)/50000;
+      for(int temp = 0; temp < numZero, temp++) {
+        buffer.addBack('0');
+        counter++;
+      }
+      buffer.addBack('1');
+      lastTime += (numZero+1) * 50000;
+    }
+
+    if (counter%8 == 0){
+      counter -= 8;
+      char temp[8];
+      for(int i = 0; i < 8; i++) {
+        temp[i] = peekFront(buffer);
+        leaveFront(buffer);
+      }
+
+      if (temp[0] == '1' && temp[1] == '1' && temp[2] == '1' && temp[3] == '1'
+       && temp[4] == '1' && temp[5] == '1' && temp[6] == '1' && temp[7] == '1') {
+        state = 0;
+        print(message,'f');
+        nuke(buffer);
+        nuke(message);
+        print(message,'f');
+      }
+
+      addBack(message,convertBack(temp));
+
+    }
   }
+
 
 
 #else
@@ -80,14 +132,14 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         usleep(50000);
       }
     }
-    
+
     for(int a = 0; a<8 ; a++){
       kill(pid,SIGUSR1);
       usleep(50000);
     }
-    
-    
-    
+
+
+
   }
   void handler(int signal_val) {
     switch(signal_val){
@@ -102,7 +154,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
     }
     //sleep(1);
     counter++;
-  
+
     if (counter%8 == 0){
       counter -= 8;
       char temp[8];
@@ -110,7 +162,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         temp[i] = peekFront(buffer);
         leaveFront(buffer);
       }
-      
+
       if (temp[0] == '1' && temp[1] == '1' && temp[2] == '1' && temp[3] == '1'
        && temp[4] == '1' && temp[5] == '1' && temp[6] == '1' && temp[7] == '1') {
         print(message,'f');
@@ -118,11 +170,11 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         nuke(message);
         print(message,'f');
       }
-      
+
       addBack(message,convertBack(temp));
 
     }
-  
+
   }
 #endif
 
@@ -132,52 +184,52 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 int main(void) {
   initSqueue(&buffer);
   initSqueue(&message);
-  
+
   struct sigaction sa;
   sa.sa_handler = handler;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
   sa.sa_flags = SA_RESTART;
-  
+
   sigaction(SIGUSR1, &sa, NULL);
   sigaction(SIGUSR2, &sa, NULL);
-  
+
   pid_t mypid = getpid();
   printf("Own PID: %d\n",mypid);
   pid_t otherpid;
   scanf("%d", &otherpid);
   char waste = getchar();
-  
-  
-  
+
+
+
   while(1){
     char input[4096]={0};
     int i = 0;
     char ch;
-    
+
     counter = 0;
-    
+
     while((ch = getchar()) != '\n') {
           input[i++] = ch;
     }
-    
+
     send(input,strlen(input), otherpid);
     //send("abc",3, otherpid);
-    
-    
-    
+
+
+
     //sleep(1);
     usleep(10000);
     //exit(1);
 
     }
-    
-    
+
+
   }
-  
-  
-  
-  
+
+
+
+
 
 /*int receive() {
   int count = counter;
@@ -185,13 +237,13 @@ int main(void) {
   while(count%8 == 0 && count != 0) {
     count -= 8;
     char temp[8];
-    
+
     for(int i = 0; i < 8; i++) {
       temp[i] = peekFront(buffer);
       leaveFront(buffer);
     }
-    
-    
+
+
     if (temp[0] == '1' && temp[1] == '1' && temp[2] == '1' && temp[3] == '1'
      && temp[4] == '1' && temp[5] == '1' && temp[6] == '1' && temp[7] == '1') {
       return 1;
