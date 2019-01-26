@@ -106,7 +106,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         print(message,'f');
         nuke(buffer);
         nuke(message);
-        print(message,'f');
+        //print(message,'f');
       }
 
       addBack(message,convertBack(temp));
@@ -129,13 +129,13 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
           kill(pid, SIGUSR1);
         }
         //sleep(1);
-        usleep(50000);
+        usleep(5000);
       }
     }
 
     for(int a = 0; a<8 ; a++){
       kill(pid,SIGUSR1);
-      usleep(50000);
+      usleep(5000);
     }
 
 
@@ -144,11 +144,11 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
   void handler(int signal_val) {
     switch(signal_val){
       case SIGUSR1:
-        printf("Recieved SIGUSR1,%d\n",counter);
+        //printf("Recieved SIGUSR1,%d\n",counter);
         addBack(buffer,'1');
         break;
       case SIGUSR2:
-        printf("Recieved SIGUSR2,%d\n",counter);
+        //printf("Recieved SIGUSR2,%d\n",counter);
         addBack(buffer,'0');
         break;
     }
@@ -168,7 +168,8 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         print(message,'f');
         nuke(buffer);
         nuke(message);
-        print(message,'f');
+        return;
+        //print(message,'f');
       }
 
       addBack(message,convertBack(temp));
