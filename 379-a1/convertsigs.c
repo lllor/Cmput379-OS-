@@ -47,14 +47,14 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
 #ifdef SINGLE
 
-  struct time_val;
-  long lastTime;
+  struct timeval tv;
+  long lastTime = 0;
   int state = 0;
 
   void send(char message[], int length, pid_t pid) {
     //wake other process up
     kill(pid, SIGUSR1);
-    usleep(25000);
+    usleep(2500);
 
     for(int i = 0; i < length; i++) {
       char sendChar[8];
@@ -64,7 +64,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         if(sendChar[a] == '0') {
           kill(pid, SIGUSR1);
         }
-        usleep(50000);
+        usleep(5000);
       }
     }
 
@@ -72,26 +72,29 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
     for(int start = 0; start < 8; start++) {
       kill(pid, SIGUSR1);
-      usleep(50000);
+      usleep(5000);
     }
   }
   void handler(int signal_val) {
+    // no segmental error here
     if(state == 0) {
       state = 1;
-      gettimeoftheday(&time_val, NULL);
-      lastTime = time_val.tv_sec * 1000000 + time_val.tv_usec;
+      //segmentation error before this message
+      gettimeofday(&tv, NULL);
+      lastTime = tv.tv_sec * 1000000 + tv.tv_usec;
     }
     else {
-      gettimeoftheday(&time_val, NULL);
-      int numZero = (int)(time_val.tv_sec * 1000000 + time_val.tv_usec - lastTime)/50000;
-      for(int temp = 0; temp < numZero, temp++) {
-        buffer.addBack('0');
+      // segmentation error before here
+      gettimeofday(&tv, NULL);
+      int numZero = (int)(tv.tv_sec * 1000000 + tv.tv_usec - lastTime)/5000;
+      for(int temp = 0; temp < numZero; temp++) {
+        addBack(buffer, '0');
         counter++;
       }
-      buffer.addBack('1');
-      lastTime += (numZero+1) * 50000;
+      addBack(buffer,'1');
+      lastTime += (numZero+1) * 5000;
     }
-
+    // segmental error before here
     if (counter%8 == 0){
       counter -= 8;
       char temp[8];
@@ -107,6 +110,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         nuke(buffer);
         nuke(message);
         //print(message,'f');
+        return;
       }
 
       addBack(message,convertBack(temp));
@@ -213,7 +217,6 @@ int main(void) {
     while((ch = getchar()) != '\n') {
           input[i++] = ch;
     }
-
     send(input,strlen(input), otherpid);
     //send("abc",3, otherpid);
 
