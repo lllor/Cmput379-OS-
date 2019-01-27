@@ -2,7 +2,7 @@ convertsigs: squeue.o convertsigs.o
 	gcc -g -o convertsigs squeue.o convertsigs.o -lm
 
 convertsigs.o: 	squeue.h convertsigs.c
-	gcc -g -c -DSINGLE convertsigs.c
+	gcc -g -c convertsigs.c
 squeue.o:       squeue.c squeue.h
 	gcc -g -c squeue.c
 squeue_test.o:	squeue.h squeue_test.c

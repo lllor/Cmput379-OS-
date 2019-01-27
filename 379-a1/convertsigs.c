@@ -196,11 +196,9 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       kill(pid,SIGUSR1);
       usleep(5000);
     }
-
-
-
   }
   void handler(int signal_val) {
+  	printf("inhandler, %d\n",counter);
     switch(signal_val){
       case SIGUSR1:
         //printf("Recieved SIGUSR1,%d\n",counter);
@@ -263,14 +261,14 @@ int main(void) {
   char input[4096]={0};
 
   
+  counter = 0;
   while(1){
     
     int i = 0;
     char ch;
 
-    counter = 0;
-    //printf("now enter:");
-    if (input[0] == 0){
+
+    if (input[0] == 0 && isEmpty(buffer) && isEmpty(message)){
     	printf("input: ");
     	while((ch = getchar()) != '\n') {
           input[i] = ch;
@@ -285,6 +283,7 @@ int main(void) {
     
     if(isEmpty(buffer) && isEmpty(message)){
     	printf("\nnow we can send\n");
+    	counter = 0;
     	send(input,strlen(input), otherpid);
     	//usleep(10000);
     	for(int i=0;i<4096;i++){
