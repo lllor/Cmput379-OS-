@@ -15,7 +15,7 @@ This software cannot be publicly posted under any circumstances, whether by the 
 void initSqueue (Squeue ** squeue)
 {
 	(*squeue)=malloc(sizeof(Squeue));				//malloc eough space for a squeue
-	(*squeue)->first=NULL;						//this is a empty squeue 
+	(*squeue)->first=NULL;						//this is a empty squeue
 	(*squeue)->last =NULL;
 }
 bool isEmpty (const Squeue *squeue)
@@ -54,7 +54,7 @@ void addBack (Squeue *squeue, char val)
 		squeue->last=newNode;
 	}
 }
-char peekFront (const Squeue *squeue)	
+char peekFront (const Squeue *squeue)
 {
 	assert (!isEmpty(squeue));
 	return ((squeue->first)->val);					//to get the val of the first element
@@ -71,7 +71,7 @@ void nuke (Squeue *squeue)
 		leaveFront(squeue);
 	}
 }
-void leaveFront (Squeue *squeue)		
+void leaveFront (Squeue *squeue)
 {
 	assert(!isEmpty(squeue));					//make sure this is not an empty squeue
 	if(squeue->first==squeue->last)					//if there is only one nodes
@@ -90,6 +90,27 @@ void leaveFront (Squeue *squeue)
 		squeue->first->prev=NULL;
 	}
 }
+
+void leaveBack(Squeue *squeue)
+{
+	assert(!isEmpty(squeue));					//make sure this is not an empty squeue
+	if(squeue->first==squeue->last)					//if there is only one nodes
+	{
+		//free(squeue->first->val);				//free the memory
+		//free(squeue->first);
+		squeue->first=NULL;					//set the squeue as empty
+		squeue->last=NULL;
+	}
+	else
+	{
+		struct Node *temp=squeue->last->prev;			//else bulid a temp to store the first->next
+		//free(squeue->first->val);				//free the memory
+		//free(squeue->first);
+		squeue->last=temp;					//set the first->next as first
+		squeue->last->next=NULL;
+	}
+}
+
 void print (const Squeue *squeue, char direction)
 {
 	//assert(!isEmpty(squeue));
@@ -110,11 +131,10 @@ void print (const Squeue *squeue, char direction)
 		struct Node *pp=squeue->last;				//begin with the last
 		while(pp!=NULL)
 		{
-			printf("\t%c\n",pp->val);			
+			printf("\t%c\n",pp->val);
 			pp=pp->prev;
 		}
 	}
 	else
 		fprintf(stderr,"Error, illegal direction <%c>",direction);
 }
-

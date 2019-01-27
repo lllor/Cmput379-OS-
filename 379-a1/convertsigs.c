@@ -55,9 +55,6 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
   int state = 0;
 
   void send(char message[], int length, pid_t pid) {
-    //wake other process up
-    kill(pid, SIGUSR1);
-    usleep(2500);
 
     for(int i = 0; i < length; i++) {
       char sendChar[8];
@@ -66,112 +63,69 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       for(int a = 0; a < 8; a++) {
         if(sendChar[a] == '1') {
           kill(pid, SIGUSR1);
+          usleep(50000);
         }
-        usleep(50000);
+        else {
+          kill(pid, SIGUSR1);
+          usleep(5000);
+          kill(pid, SIGUSR1);
+          usleep(45000);
+        }
       }
     }
 
     // end signal
 
-    for(int start = 0; start < 8; start++) {
+    for(int start = 0; start < 9; start++) {
       kill(pid, SIGUSR1);
       usleep(50000);
     }
     printf("Send over\n");
   }
 
-  void getmessage(){
-  	char tempp[8];
-    for(int i = 0; i < 8; i++) {
-        tempp[i] = peekFront(buffer);
-        leaveFront(buffer);
-    }
-    if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
-       && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1')
-    	{
-    		return;
-    	}
-    addBack(message,convertBack(tempp));
-    getmessage();
-    //return;
-  }
-  
   void handler(int signal_val) {
     //char tempp[8];
-    // no segmental error here
-    if(state == 0) {
-      state = 1;
-      //segmentation error before this message
-      gettimeofday(&tv, 0);
+    gettimeofday(&tv, NULL);
+    if(lastTime == 0) {
       lastTime = tv.tv_sec * 1000000 + tv.tv_usec;
+      addBack(buffer, '1');
+      //counter++;
     }
     else {
-      gettimeofday(&tv, NULL);
-      int numZero = (int)(tv.tv_sec * 1000000 + tv.tv_usec - lastTime)/50000;
-     // printf("numZero = %d\n",numZero);
-      for(int temp = 0; temp < numZero; temp++) {
-      	printf("I Recieved '0'\n");
+      long timeNow = tv.tv_sec * 1000000 + tv.tv_usec;
+      if(timeNow - lastTime < 10000) {
+        leaveBack(buffer);
         addBack(buffer, '0');
+      }
+      else {
+        addBack(buffer, '1');
         counter++;
-        
-        if (counter%8 == 0 && counter != 0){
-          counter -= 8;
-          char tempp[8];
-          //print(buffer,'f');
-          for(int i = 0; i < 8; i++) {
-            tempp[i] = peekFront(buffer);
-            leaveFront(buffer);
-          }
-
-          if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
-           && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
-            state = 0;
-            print(message,'f');
-            nuke(buffer);
-            nuke(message);
-         	lastTime = 0;
-            return;
-          }
-
-          addBack(message,convertBack(tempp));
-
-        }
-	  }
-      addBack(buffer,'1');
-      counter ++;
-      lastTime += (numZero+1) * 50000;
-
-      if (counter%8 == 0 && counter != 0){
-          counter -= 8;
-          char tempp[8];
-          //print(buffer,'f');
-          for(int i = 0; i < 8; i++) {
-            tempp[i] = peekFront(buffer);
-            leaveFront(buffer);
-          }
-
-          if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
-           && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
-           	state = 0;
-            print(message,'f');
-            nuke(buffer);
-            nuke(message);
-            lastTime = 0;
-            return;
-          }
-
-          addBack(message,convertBack(tempp));
-
-        }
+      }
+      lastTime = timeNow;
     }
-    
-    print(buffer,'f');
 
-    
+    if (counter > 7){
+        counter -= 8;
+        char tempp[8];
+        //print(buffer,'f');
+        for(int i = 0; i < 8; i++) {
+          tempp[i] = peekFront(buffer);
+          leaveFront(buffer);
+        }
+        if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
+         && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
+          printf("full message received");
+          print(message,'f');
+          nuke(buffer);
+          nuke(message);
+          lastTime = 0;
+          return;
+        }
+        addBack(message,convertBack(tempp));
+      }
+    //print(buffer,'f');
     return;
   }
-
-
 
 #else
   void send(char message[], int length, pid_t pid) {
@@ -311,18 +265,18 @@ int main(void) {
 }*/
 /*
 
-      
+
       printf("%s\n",tempp);
 
       if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
-       && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') 
+       && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1')
       {
       	printf("In\n");
       	//print(buffer,'f');
         //state = 0;
-    	
+
     	//getmessage();
-		
+
 		//print(message,'f');
         //print(buffer,'f');
         //nuke(buffer);
@@ -332,10 +286,10 @@ int main(void) {
         //printf("end");
         //return;
       }
-      
+
 
      // addBack(message,convertBack(tempp));
-	
+
     }
 
 
