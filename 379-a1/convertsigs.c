@@ -19,6 +19,7 @@ int counter = 0;
 int counter_single = 0;
 
 
+
 char *convert(char a, char *result){
   int asciiNum = (int)a;
   //printf("%d\n", asciiNum);
@@ -97,6 +98,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
   }
   
   void handler(int signal_val) {
+  	printf("inhandler\n");
     //char tempp[8];
     // no segmental error here
     if(state == 0) {
@@ -117,7 +119,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         if (counter%8 == 0 && counter != 0){
           counter -= 8;
           char tempp[8];
-          //print(buffer,'f');
+          print(buffer,'f');
           for(int i = 0; i < 8; i++) {
             tempp[i] = peekFront(buffer);
             leaveFront(buffer);
@@ -129,6 +131,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
             print(message,'f');
             nuke(buffer);
             nuke(message);
+            
          	lastTime = 0;
             return;
           }
@@ -144,7 +147,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       if (counter%8 == 0 && counter != 0){
           counter -= 8;
           char tempp[8];
-          //print(buffer,'f');
+          print(buffer,'f');
           for(int i = 0; i < 8; i++) {
             tempp[i] = peekFront(buffer);
             leaveFront(buffer);
@@ -156,6 +159,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
             print(message,'f');
             nuke(buffer);
             nuke(message);
+            
             lastTime = 0;
             return;
           }
@@ -164,8 +168,6 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
         }
     }
-    
-    //print(buffer,'f');
 
     
     return;
@@ -226,6 +228,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         print(message,'f');
         nuke(buffer);
         nuke(message);
+        
         return;
       }
 
@@ -257,109 +260,48 @@ int main(void) {
   pid_t otherpid;
   scanf("%d", &otherpid);
   char waste = getchar();
+  char input[4096]={0};
 
-
-
+  
   while(1){
-    char input[4096]={0};
+    
     int i = 0;
     char ch;
 
     counter = 0;
     //printf("now enter:");
-    while((ch = getchar()) != '\n') {
-          input[i++] = ch;
-    }
-    send(input,strlen(input), otherpid);
-    //send("abc",3, otherpid);
-
-
-
-    //sleep(1);
-    usleep(10000);
-    //exit(1);
-
-    }
-
-
-  }
-
-
-
-
-
-/*int receive() {
-  int count = counter;
-  printf("I'm in\n");
-  while(count%8 == 0 && count != 0) {
-    count -= 8;
-    char temp[8];
-
-    for(int i = 0; i < 8; i++) {
-      temp[i] = peekFront(buffer);
-      leaveFront(buffer);
-    }
-
-
-    if (temp[0] == '1' && temp[1] == '1' && temp[2] == '1' && temp[3] == '1'
-     && temp[4] == '1' && temp[5] == '1' && temp[6] == '1' && temp[7] == '1') {
-      return 1;
-    }
-    addBack(message,convertBack(temp));
-  }
-  return 0;
-}*/
-/*
-
-      
-      printf("%s\n",tempp);
-
-      if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
-       && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') 
-      {
-      	printf("In\n");
-      	//print(buffer,'f');
-        //state = 0;
+    if (input[0] == 0){
+    	printf("input: ");
+    	while((ch = getchar()) != '\n') {
+          input[i] = ch;
+          i++;
+    	}
     	
-    	//getmessage();
-		
-		//print(message,'f');
-        //print(buffer,'f');
-        //nuke(buffer);
-        //nuke(message);
-        //
-        //lastTime = 0;
-        //printf("end");
-        //return;
-      }
-      
-
-     // addBack(message,convertBack(tempp));
-	
     }
-
-
-
-
-
-
-        if (counter >7){
-    	int num = 0;
-    	struct Node *pp = buffer -> last;
-    	while (num<8)
-    	{
-   		  tempp[num] = pp->val;
-    	  pp=pp->prev;
-    	  num ++;
+    
+    
+    //printf("%s\n",input);
+    //printf("%s\n",input);
+    
+    if(isEmpty(buffer) && isEmpty(message)){
+    	printf("\nnow we can send\n");
+    	send(input,strlen(input), otherpid);
+    	//usleep(10000);
+    	for(int i=0;i<4096;i++){
+    		input[i] = 0;
     	}
-    	printf("%s\n",tempp);
-   	    if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
-    	   	&& tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1')
-    	{
-    		printf("In\n");
-    	}
-    	for(int i=0;i<8;i++){
-      		tempp[i]='0';
-    	}
-    //}
-    }*/
+    }	
+	
+
+    
+	//printf("\nwe Recieved message but need time to send/or we dont recieved any message\n");
+    usleep(100000);
+
+
+
+  }
+}
+
+
+
+
