@@ -14,3 +14,4 @@ clean:
 	rm -f *.o
 	rm -f squeue
 	rm -f convertsigs
+	rm -r squeue_test

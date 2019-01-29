@@ -111,15 +111,17 @@ void leaveBack(Squeue *squeue)
 	}
 }
 
-void print (const Squeue *squeue, char direction)
+void print (const Squeue *squeue, char direction, char iferror)
 {
 	//assert(!isEmpty(squeue));
 	if (direction=='f')						//print in order
 	{
 		printf("stack is:\n");
 		struct Node *pp=squeue->first;				//begin with the first element
+		printf("%c ", iferror);
 		while(pp!=NULL)						//til the end
 		{
+
 			printf("%c",pp->val);
 			pp=pp->next;
 		}
@@ -129,6 +131,7 @@ void print (const Squeue *squeue, char direction)
 	{
 		printf("stack is:\n");
 		struct Node *pp=squeue->last;				//begin with the last
+		printf("%c ", iferror);
 		while(pp!=NULL)
 		{
 			printf("\t%c\n",pp->val);

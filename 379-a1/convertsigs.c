@@ -16,6 +16,8 @@
 Squeue *buffer=NULL;
 Squeue *message=NULL;
 int counter = 0;
+struct timeval tv;
+long lastTime = 0;
 //int counter_single = 0;
 
 
@@ -50,11 +52,6 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
 #ifdef SINGLE
 
-
-  struct timeval tv;
-  long lastTime = 0;
-  int state = 0;
-
   void send(char message[], int length, pid_t pid) {
     for(int i = 0; i < length; i++) {
       char sendChar[8];
@@ -72,6 +69,12 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
           usleep(45000);
         }
       }
+      // test usage
+      /*
+      if(i == 3) {
+        usleep(150000);
+      }
+      */
     }
 
     // end signal
@@ -80,7 +83,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       kill(pid, SIGUSR1);
       usleep(50000);
     }
-    printf("Send over\n");
+    //printf("Send over\n");
   }
 
 
@@ -116,7 +119,14 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
          && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
           //printf("full message received");
-          print(message,'f');
+          print(message,'f','!');
+          nuke(buffer);
+          nuke(message);
+          lastTime = 0;
+          return;
+        }
+        else if(tempp[0] == '1') {
+          print(message,'f','?');
           nuke(buffer);
           nuke(message);
           lastTime = 0;
@@ -143,16 +153,18 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
           kill(pid, SIGUSR1);
         }
         //sleep(1);
-        usleep(5000);
+        usleep(50000);
       }
     }
 
     for(int a = 0; a<8 ; a++){
       kill(pid,SIGUSR1);
-      usleep(5000);
+      usleep(50000);
     }
   }
   void handler(int signal_val) {
+    gettimeofday(&tv, NULL);
+    lastTime = tv.tv_sec*1000000 + tv.tv_usec;
   	//printf("inhandler, %d\n",counter);
     switch(signal_val){
       case SIGUSR1:
@@ -178,10 +190,15 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
 
       if (temp[0] == '1' && temp[1] == '1' && temp[2] == '1' && temp[3] == '1'
        && temp[4] == '1' && temp[5] == '1' && temp[6] == '1' && temp[7] == '1') {
-        print(message,'f');
+        print(message,'f','!');
         nuke(buffer);
         nuke(message);
-
+        return;
+      }
+      else if(temp[0] == '1') {
+        print(message,'f','?');
+        nuke(buffer);
+        nuke(message);
         return;
       }
 
@@ -222,22 +239,31 @@ int main(void) {
     int i = 0;
     char ch;
 
-
     if (input[0] == 0 && isEmpty(buffer) && isEmpty(message)){
     	printf("input: ");
     	while((ch = getchar()) != '\n') {
           input[i] = ch;
           i++;
     	}
-
     }
 
+    // the program will hold at getchar(), no idea on where should
+    // I put the following code
+    /*
+    gettimeofday(&tv, NULL);
+    if(tv.tv_sec * 1000000 + tv.tv_usec - lastTime > 100000
+        && (!isEmpty(buffer) || !isEmpty(message))){
+      print(message, 'f', '?');
+      nuke(message);
+      nuke(buffer);
+    }
+    */
 
     //printf("%s\n",input);
     //printf("%s\n",input);
 
     if(isEmpty(buffer) && isEmpty(message)){
-    	printf("\nnow we can send\n");
+    	//printf("\nnow we can send\n");
     	counter = 0;
     	send(input,strlen(input), otherpid);
     	//usleep(10000);
@@ -245,13 +271,7 @@ int main(void) {
     		input[i] = 0;
     	}
     }
-
-
-
-	//printf("\nwe Recieved message but need time to send/or we dont recieved any message\n");
-    usleep(100000);
-
-
-
+	   //printf("\nwe Recieved message but need time to send/or we dont recieved any message\n");
+     //usleep(100000);
   }
 }
