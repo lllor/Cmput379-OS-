@@ -12,39 +12,6 @@ gcc -o test4 oneprocess.c
 #include<signal.h>
 #include<stdlib.h>
 #include <unistd.h>
-
-#ifdef SIGNAL//user2
-#else//user1
-char* GetInput(){
-    char temp;
-    int i=0,c;
-    temp = getchar();
-    //temp = getchar();
-    
-    while (temp!='.')
-    {
-        if (temp == '!'){
-            char pMsg[2048] = {0};
-            i = 0;
-            printf("valid send message\n");
-            temp = getchar();
-            while (i<2047 && (c=getchar())!='\n'){
-                pMsg[i++] = c;
-            }
-            pMsg[i] = 0;
-            
-            
-            //temp = getchar();
-            
-        }
-    
-        else{
-            printf("invalid sending message\n");
-            exit(1);
-        }
-    }
-}
-#endif
 //deal with SIGUSR1
 void signalDeal(int signo,siginfo_t *info,void *context)
 {
@@ -91,12 +58,7 @@ int main(int argc,char *argv[])
 
     }
     
-    wait(NULL);
-    if(sigqueue(other,SIGUSR1,val) == -1)
-    {
-        printf("sigqueue faild!\n");
-        exit(1);
-    }
+    wait(NULL)
     char temp = getchar();
 
 
@@ -119,28 +81,64 @@ int main(int argc,char *argv[])
     
     
 
-    
+
    
+    
+    //char temp;
+    //temp = getchar();
+   // temp = getchar();
+    int i=0,c;
 
+/*    int integer;
+    int result = scanf("%d",&integer);
+    if (result>0){
+        while (i<2047 && (c=getchar())!='\n'){
+            pMsg[i++] = c;
+        }
+        pMsg[i] = 0;
+            
+        val.sival_ptr = pMsg;
+    }
+    sleep(5);
+    
     val.sival_ptr = pMsg;
-        
-    if(sigqueue(other,SIGUSR1,val) == -1)
+
+
+    /*if(sigqueue(other,SIGUSR1,val) == -1)
     {
         printf("sigqueue faild!\n");
         exit(1);
-    }
-    
-
-
-    if(sigqueue(other,SIGUSR1,val) == -1)
+    }*/
+/*    while (temp!='.')
     {
-        printf("sigqueue faild!\n");
-        exit(1);
+        if (temp == '!'){
+            char pMsg[2048] = {0};
+            i = 0;
+            printf("valid send message\n");
+            temp = getchar();
+            while (i<2047 && (c=getchar())!='\n'){
+                pMsg[i++] = c;
+            }
+            pMsg[i] = 0;
+            
+            val.sival_ptr = pMsg;
+            
+            if(sigqueue(other,SIGUSR1,val) == -1)
+            {
+                printf("sigqueue faild!\n");
+                exit(1);
+            }
+            //temp = getchar();
+	        
+        }
+	
+        else{
+            printf("invalid sending message\n");
+	        exit(1);
+        }
     }
 
-    
-
-
+*/
     while (1)
     {
         sleep(1);
