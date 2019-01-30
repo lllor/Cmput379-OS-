@@ -73,7 +73,7 @@ void nuke (Squeue *squeue)
 }
 void leaveFront (Squeue *squeue)
 {
-	assert(!isEmpty(squeue));					//make sure this is not an empty squeue
+	//assert(!isEmpty(squeue));					//make sure this is not an empty squeue
 	if(squeue->first==squeue->last)					//if there is only one nodes
 	{
 		//free(squeue->first->val);				//free the memory
