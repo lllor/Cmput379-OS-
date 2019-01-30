@@ -1,3 +1,5 @@
+#define _POSIX_SOURCE
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
@@ -8,7 +10,7 @@
 #include "squeue.h"
 #include <math.h>
 #include <string.h>
-
+#include <assert.h>
 #include <errno.h> //may not use
 
 
@@ -18,6 +20,8 @@ Squeue *message=NULL;
 int counter = 0;
 struct timeval tv;
 long lastTime = 0;
+long flag_time = 0;
+int flag_handler = 0;
 //int counter_single = 0;
 
 
@@ -60,36 +64,29 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
       for(int a = 0; a < 8; a++) {
         if(sendChar[a] == '1') {
           kill(pid, SIGUSR1);
-          usleep(50000);
+          usleep(50000);//50000
         }
         else {
           kill(pid, SIGUSR1);
-          usleep(5000);
+          usleep(5000);//5000
           kill(pid, SIGUSR1);
-          usleep(45000);
+          usleep(45000);//45000
         }
       }
-      // test usage
-      /*
-      if(i == 3) {
-        usleep(150000);
-      }
-      */
     }
-
-    // end signal
 
     for(int start = 0; start < 9; start++) {
       kill(pid, SIGUSR1);
-      usleep(50000);
+      usleep(50000);//50000
     }
-    //printf("Send over\n");
+    //printf("send over\n");
   }
 
 
   void handler(int signal_val) {
-  	//printf("inhandler\n");
+  	
     gettimeofday(&tv, NULL);
+    
     if(lastTime == 0) {
       lastTime = tv.tv_sec * 1000000 + tv.tv_usec;
       addBack(buffer, '1');
@@ -97,7 +94,7 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
     }
     else {
       long timeNow = tv.tv_sec * 1000000 + tv.tv_usec;
-      if(timeNow - lastTime < 10000) {
+      if(timeNow - lastTime < 10000) {//10000
         leaveBack(buffer);
         addBack(buffer, '0');
       }
@@ -111,22 +108,40 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
     if (counter > 7){
         counter -= 8;
         char tempp[8];
-        //print(buffer,'f');
+        //print(buffer,'f','!');
+        //printf("\n");
         for(int i = 0; i < 8; i++) {
           tempp[i] = peekFront(buffer);
           leaveFront(buffer);
         }
+        
         if (tempp[0] == '1' && tempp[1] == '1' && tempp[2] == '1' && tempp[3] == '1'
          && tempp[4] == '1' && tempp[5] == '1' && tempp[6] == '1' && tempp[7] == '1') {
           //printf("full message received");
-          print(message,'f','!');
+          if(flag_handler == 0){
+            printf("! ");
+          }
+          if(!isEmpty(message)){
+            print(message,'f','!');
+            printf("\n");
+          }
+          
           nuke(buffer);
           nuke(message);
+          flag_handler = 0;
           lastTime = 0;
           return;
         }
         else if(tempp[0] == '1') {
-          print(message,'f','?');
+          //printf("%d",flag_handler);
+          if(flag_handler == 0){
+            printf("? ");
+          }
+          if(!isEmpty(message)){
+            print(message,'f','?');
+          }
+          
+          flag_handler = 1;
           nuke(buffer);
           nuke(message);
           lastTime = 0;
@@ -134,8 +149,8 @@ char convertBack(char a[] ) { // a have to be an array with 8 element
         }
         addBack(message,convertBack(tempp));
       }
-    //print(buffer,'f');
-    return;
+    
+    
   }
 
 
@@ -238,15 +253,16 @@ int main(void) {
 
     int i = 0;
     char ch;
-
+    //printf("input: ");
+    assert(isEmpty(buffer));
+    assert(isEmpty(message));
     if (input[0] == 0 && isEmpty(buffer) && isEmpty(message)){
     	printf("input: ");
-    	while((ch = getchar()) != '\n') {
+      while((ch = getchar()) != '\n') {
           input[i] = ch;
           i++;
-    	}
+      }
     }
-
     // the program will hold at getchar(), no idea on where should
     // I put the following code
     /*
@@ -259,9 +275,6 @@ int main(void) {
     }
     */
 
-    //printf("%s\n",input);
-    //printf("%s\n",input);
-
     if(isEmpty(buffer) && isEmpty(message)){
     	//printf("\nnow we can send\n");
     	counter = 0;
@@ -270,6 +283,10 @@ int main(void) {
     	for(int i=0;i<4096;i++){
     		input[i] = 0;
     	}
+      nuke(buffer);
+      nuke(message);
+      flag_handler = 0;
+      //printf("out\n");
     }
 	   //printf("\nwe Recieved message but need time to send/or we dont recieved any message\n");
      //usleep(100000);

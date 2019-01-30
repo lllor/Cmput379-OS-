@@ -93,7 +93,8 @@ void leaveFront (Squeue *squeue)
 
 void leaveBack(Squeue *squeue)
 {
-	assert(!isEmpty(squeue));					//make sure this is not an empty squeue
+	//assert(!isEmpty(squeue));					//make sure this is not an empty squeue
+		
 	if(squeue->first==squeue->last)					//if there is only one nodes
 	{
 		//free(squeue->first->val);				//free the memory
@@ -116,16 +117,16 @@ void print (const Squeue *squeue, char direction, char iferror)
 	//assert(!isEmpty(squeue));
 	if (direction=='f')						//print in order
 	{
-		printf("stack is:\n");
+		//printf("stack is:\n");
 		struct Node *pp=squeue->first;				//begin with the first element
-		printf("%c ", iferror);
+		//printf("%c ", iferror);
 		while(pp!=NULL)						//til the end
 		{
 
 			printf("%c",pp->val);
 			pp=pp->next;
 		}
-		printf("\n");
+		//printf("\n");
 	}
 	else if(direction=='r')						//print in reverse
 	{
