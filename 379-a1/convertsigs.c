@@ -22,11 +22,10 @@ struct timeval tv;
 long lastTime = 0;                  //store the last time we recieved a signal 
 long flag_time = 0;         
 int flag_handler = 0;               //=1 if we already print a '?' ; =0 if we not
-//int counter_single = 0;
 
 
 
-char *convert(char a, char *result){
+void convert(char a, char *result){
     int asciiNum = (int)a;
     //printf("%d\n", asciiNum);
     for(int i = 0; i < 8; i++) {
@@ -39,7 +38,6 @@ char *convert(char a, char *result){
             result[7-i] = '1';
         }
     }
-    return result;
 }
 
 char convertBack(char a[] ) { // a have to be an array with 8 element
@@ -280,7 +278,7 @@ int main(void) {
     initSqueue(&buffer);                                    //init the queue
     initSqueue(&message);
 
-    struct sigaction sa;                                       //init the sigactiom
+    struct sigaction sa;                                    //init the sigactiom
     sa.sa_handler = handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
@@ -309,6 +307,10 @@ int main(void) {
                 input[i] = ch;
                 i++;
             }
+        }
+
+        if(input[0] == '.') {
+            break;
         }
 
         if(isEmpty(buffer) && isEmpty(message)){                //if the process is not in sending/recieving
