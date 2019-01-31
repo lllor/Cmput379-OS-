@@ -293,15 +293,15 @@ int main(void) {
     printf("Own PID: %d\n",mypid);
     pid_t otherpid;
     scanf("%d", &otherpid);
-    char waste = getchar();
+    char ch;
     char input[4096]={0};
-
+    ch = getchar();
 
     counter = 0;   
     while(1){
 
         int i = 0;
-        char ch;
+        
         
         if (input[0] == 0 && isEmpty(buffer) && isEmpty(message)){//if the user havent enter anything and the process is not in send/recieving process
     	
