@@ -295,6 +295,10 @@ int main(void) {
     char input[4096]={0};
     ch = getchar();
 
+    if(otherpid == 0) {                                     //check if the input pid is valid
+        return 0;
+    }
+
     counter = 0;   
     while(1){
 
