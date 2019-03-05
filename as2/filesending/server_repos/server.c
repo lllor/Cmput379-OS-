@@ -9,12 +9,14 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <pthread.h>
- 
+#include <openssl/md5.h>
+
 #define portnum 9999
 #define FILE_SIZE 500 
 #define BUFFER_SIZE 1024
 int new_fd = 0; 
 void *net_thread(void * fd);
+char *convertMD5(char filename[],char *result);
 void download(void * fd,char input[]);
 void update(void * fd,char input[]);
 int main()
@@ -138,8 +140,19 @@ void *net_thread(void * fd)
       	{
       		case 'l':	
       					break;
-      		case 'u':	update(fd,temp_buffer);	
+      		case 'u':  {
+      					update(fd,temp_buffer);	
+      					char md5[MD5_DIGEST_LENGTH*2]={0};
+    					convertMD5(temp_buffer+2,md5); 
+    					int ret = rename(temp_buffer+2,md5);
+    					printf("%s\n",md5);
+    					if (ret ==0){
+    						printf("rename successfully\n");
+    					}else{
+    						printf("unable to rename");
+    					}
       					break;
+      					}
       		case 'd':	download(fd,temp_buffer);
       					break;
       		case 'r':
@@ -147,7 +160,7 @@ void *net_thread(void * fd)
       		case 'q':
       					break;
       	}
-    //strncpy(file_name, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer)); 
+     
 		
         
 	}
@@ -159,7 +172,7 @@ void update(void * fd,char input[]){
 	char buffer[BUFFER_SIZE];
 	char file_name[FILE_SIZE];
 	
-	memset( file_name,0, sizeof(file_name) );
+	memset(file_name,0, sizeof(file_name) );
 	strncpy(file_name,input+2,499-2);
 
 	int file_fp = open(file_name,O_CREAT|O_RDWR,0777); 
@@ -168,9 +181,7 @@ void update(void * fd,char input[]){
         printf("File:\t%s Can Not Open To Write\n", file_name); 
         exit(1); 
     } 
-   
-     // 从客户端接收数据到buffer中 
-     // 每接收一段数据，便将其写入文件中，循环直到文件接收完并写完为止 
+    
     int length = 0; 
 	memset( buffer,0, sizeof(buffer) );
    
@@ -187,6 +198,10 @@ void update(void * fd,char input[]){
 		}
         memset( buffer,0, sizeof(buffer) );
     }
+    close(file_fp);
+    
+    
+
     printf("File:%s update Successful!\n", file_name);
 
 }
@@ -231,4 +246,35 @@ void download(void * fd,char input[]){
           printf("File:%s Transfer Successful!\n", file_name); 
      }
      return;   
+}
+char *convertMD5(char filename[],char *result){
+	
+	unsigned char c[MD5_DIGEST_LENGTH];
+	int i;
+    FILE *inFile = fopen (filename, "rb");
+    MD5_CTX mdContext;
+    int bytes;
+    unsigned char data[1024];
+
+    if (inFile == NULL) 
+	{
+        printf ("%s can't be opened.\n", filename);
+        return 0;
+    }
+
+    //char result[MD5_DIGEST_LENGTH*2] ={0}; 
+    char temp[2]={0};
+    for(i = 0; i < MD5_DIGEST_LENGTH; i++){
+        //printf("%02x", c[i]);
+        //printf("%lu,%x\n",sizeof(c[i]),c[i]);
+        sprintf(temp,"%02x",c[i]);
+        strcat(result,temp);
+
+        //result[i] == (hex)c[i];
+    } 
+    //printf (" %s\n", filename);
+    
+    //printf("%s\n",result);
+
+	return result;
 }
