@@ -13,8 +13,8 @@
 #define FILE_SIZE 500 
 #define BUFFER_SIZE 1024
  
-int sendfile(int sock_desc);
- 
+int downloadfile(int sock_desc,char input[]);
+int updatefile(int sock_desc,char input[]);
 int main()
 {
 	char name[30]={0};
@@ -47,25 +47,90 @@ int main()
 		perror("connect");
 		exit(3);
 	}
-	
+	char input[500] = {0};
 	while(1)
 	{
-		
-		sendfile(sock_desc);
+		char ch;
+		int i = 0;
+		while((ch = getchar()) != '\n') {
+        	input[i] = ch;
+        	i++;
+      	}
+      	switch(input[0])
+      	{
+      		case 'l':	
+      					break;
+      		case 'u':	updatefile(sock_desc,input);
+      					break;
+      		case 'd':	downloadfile(sock_desc,input);
+      					break;
+      		case 'r':
+      					break;
+      		case 'q':
+      					break;
+      	}
+		//downloadfile(sock_desc);
+
+		memset(input,0,sizeof(input));
  
     }
 	return 0;
 	
 }
-int sendfile(int sock_desc)
+int updatefile(int sock_desc,char input[])
 {
+	char file_name[FILE_SIZE];
+	char buffer[1024];
+	memset(file_name,0,sizeof(file_name));
+	strncpy(file_name,input+2,499-2);
+
+	int file2_fp = open(file_name,O_RDONLY,0777); 
+    
+    if(write(sock_desc, input, sizeof(file_name)) < 0) 
+    { 
+       perror("Send File Name Failed:"); 
+       exit(1); 
+    }
+    
+    if(file2_fp<0) 
+    { 
+       printf("File:%s Not Found\n", file_name); 
+       return 0;
+    } 
+    else 
+    { 
+        int length = 0; 
+	    memset( buffer,0, sizeof(buffer) );
+        // 每读取一段数据，便将其发送给服务器，循环直到文件读完为止 
+        while( (length = read(file2_fp, buffer, sizeof(buffer))) > 0  )    
+        {   
+            if( write(sock_desc, buffer, length) < 0) 
+            { 
+                printf("Send File:%s Failed.\n", file_name); 
+                break; 
+            } 
+            memset( buffer,0, sizeof(buffer) );
+        } 
+        // 关闭文件 
+        close(file2_fp); 
+        printf("File:%s update Successful!\n", file_name); 
+    }
+    return 1;
+}
+int downloadfile(int sock_desc,char input[])
+{
+    
+    char file_name[FILE_SIZE];
+    memset( file_name,0, sizeof(file_name) );
+    
+    //strncpy(file_name,input+2,499-2);
+    strcpy(file_name,input);
     // 输入文件名 并放到缓冲区buffer中等待发送 
 	int file_fp;
-    char file_name[FILE_SIZE];  
-	memset( file_name,0, sizeof(file_name) );
-    printf("Please Input File Name On Server:   "); 
-    
-    scanf("%s", file_name); 
+     
+	
+    //printf("Please Input File Name On Server:   "); 
+    //scanf("%s", file_name); 
    
     char buffer[BUFFER_SIZE]; 
     memset( buffer,0, sizeof(buffer) );
@@ -84,12 +149,12 @@ int sendfile(int sock_desc)
 		close(sock_desc);
 	}	
 	 // 打开文件，准备写入 
-     file_fp = open(file_name,O_CREAT|O_RDWR,0777); 
-     if( file_fp<0 ) 
-     { 
-         printf("File:\t%s Can Not Open To Write\n", file_name); 
-         exit(1); 
-     } 
+    file_fp = open(file_name+2,O_CREAT|O_RDWR,0777); 
+    if( file_fp<0 ) 
+    { 
+        printf("File:\t%s Can Not Open To Write\n", file_name); 
+        exit(1); 
+    } 
    
      // 从服务器接收数据到buffer中 
      // 每接收一段数据，便将其写入文件中，循环直到文件接收完并写完为止 

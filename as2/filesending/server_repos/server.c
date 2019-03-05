@@ -15,7 +15,8 @@
 #define BUFFER_SIZE 1024
 int new_fd = 0; 
 void *net_thread(void * fd);
- 
+void download(void * fd,char input[]);
+void update(void * fd,char input[]);
 int main()
 {
 	int serverSocket, newSocket;
@@ -62,18 +63,12 @@ int main()
 	{
 		addr_size = sizeof(serverStorgae);
 		newSocket = accept(serverSocket,(struct sockaddr *) &serverStorgae,&addr_size);
-		//struct sockaddr_in client_addr;
-		//int size=sizeof(client_addr);
-		//new_fd=accept(serverSocket,(struct sockaddr *)&client_addr,&size);  //server_fd服务器的socket描述字,&client_addr指向struct sockaddr *的指针,&size指向协议地址长度指针
- 		
+		
 		if(-1==newSocket)
 		{
 			perror("accept");
 			exit(1);       //进行下一次循环
 		}
-		
-		//printf("accept client ip：%s:%d\n",inet_ntoa(client_addr.sin_addr),client_addr.sin_port);
-		//inet_ntoa将一个十进制网络字节序转换为点分十进制IP格式的字符串。
 		
 		printf("new_fd=%d\n",newSocket);
 		
@@ -105,12 +100,6 @@ int main()
 			}
 			i=0;
 		}
-		// if(-1==ret)
-		// {
-		// 	perror("pthread_create");
-		// 	close(new_fd);
-		// 	continue;
-		// }
 		
 	}
 	close(serverSocket);
@@ -138,42 +127,108 @@ void *net_thread(void * fd)
         } 
 		
         // 然后从buffer(缓冲区)拷贝到file_name中 
-        char file_name[FILE_SIZE]; 
-		memset( file_name,0, sizeof(file_name) );	
-        strncpy(file_name, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer)); 
-		memset( buffer,0, sizeof(buffer) );
-        printf("%s\n", file_name); 
+        //char file_name[FILE_SIZE]; 
+        char temp_buffer[FILE_SIZE];
+		//memset( file_name,0, sizeof(file_name) );
+		memset( temp_buffer,0, sizeof(temp_buffer) );	
+        strncpy(temp_buffer, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer));
+        memset( buffer,0, sizeof(buffer) );
+        printf("%s\n",temp_buffer);
+        switch(temp_buffer[0])
+      	{
+      		case 'l':	
+      					break;
+      		case 'u':	update(fd,temp_buffer);	
+      					break;
+      		case 'd':	download(fd,temp_buffer);
+      					break;
+      		case 'r':
+      					break;
+      		case 'q':
+      					break;
+      	}
+    //strncpy(file_name, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer)); 
 		
-		if( strcmp(file_name,"null")==0 )
-	    {
-		   break;
-		   close(newSocket);
-	    }
-		
-		  // 打开文件并读取文件数据 
-         file2_fp = open(file_name,O_RDONLY,0777); 
-         if(file2_fp<0) 
-         { 
-            printf("File:%s Not Found\n", file_name); 
-         } 
-         else 
-         { 
-            int length = 0; 
-			memset( buffer,0, sizeof(buffer) );
-            // 每读取一段数据，便将其发送给客户端，循环直到文件读完为止 
-            while( (length = read(file2_fp, buffer, sizeof(buffer))) > 0  )    
-            {   
-                if( write(newSocket, buffer, length) < 0) 
-                { 
-                    printf("Send File:%s Failed.\n", file_name); 
-                    break; 
-                } 
-                memset( buffer,0, sizeof(buffer) );
-            } 
-              // 关闭文件 
-              close(file2_fp); 
-              printf("File:%s Transfer Successful!\n", file_name); 
-         }   
+        
 	}
 	close(newSocket);
+}
+void update(void * fd,char input[]){
+	int newSocket=*((int *)fd);
+	int file2_fp;
+	char buffer[BUFFER_SIZE];
+	char file_name[FILE_SIZE];
+	
+	memset( file_name,0, sizeof(file_name) );
+	strncpy(file_name,input+2,499-2);
+
+	int file_fp = open(file_name,O_CREAT|O_RDWR,0777); 
+    if(file_fp<0 ) 
+    { 
+        printf("File:\t%s Can Not Open To Write\n", file_name); 
+        exit(1); 
+    } 
+   
+     // 从客户端接收数据到buffer中 
+     // 每接收一段数据，便将其写入文件中，循环直到文件接收完并写完为止 
+    int length = 0; 
+	memset( buffer,0, sizeof(buffer) );
+   
+    while((length = read(newSocket, buffer, sizeof(buffer))) > 0) 
+    { 
+        if( write( file_fp, buffer, length ) < length) 
+        { 
+            printf("File:\t%s Write Failed\n", file_name); 
+            break; 
+        } 
+		if(length < sizeof(buffer))
+		{
+			break;
+		}
+        memset( buffer,0, sizeof(buffer) );
+    }
+    printf("File:%s update Successful!\n", file_name);
+
+}
+void download(void * fd,char input[]){
+	int newSocket=*((int *)fd);
+	int file2_fp;
+	char buffer[BUFFER_SIZE];
+	char file_name[FILE_SIZE];
+	memset( file_name,0, sizeof(file_name) );
+	strncpy(file_name,input+2,499-2);
+
+	printf("%s\n", file_name); 
+		
+	if( strcmp(file_name,"null")==0 )
+    {
+	   return;
+	   close(newSocket);
+    }
+	
+	  // 打开文件并读取文件数据 
+     file2_fp = open(file_name,O_RDONLY,0777); 
+     if(file2_fp<0) 
+     { 
+        printf("File:%s Not Found\n", file_name); 
+     } 
+     else 
+     { 
+        int length = 0; 
+		memset( buffer,0, sizeof(buffer) );
+        // 每读取一段数据，便将其发送给客户端，循环直到文件读完为止 
+        while( (length = read(file2_fp, buffer, sizeof(buffer))) > 0  )    
+        {   
+            if( write(newSocket, buffer, length) < 0) 
+            { 
+                printf("Send File:%s Failed.\n", file_name); 
+                break; 
+            } 
+            memset( buffer,0, sizeof(buffer) );
+        } 
+          // 关闭文件 
+          close(file2_fp); 
+          printf("File:%s Transfer Successful!\n", file_name); 
+     }
+     return;   
 }
