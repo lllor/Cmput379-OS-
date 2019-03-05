@@ -1,4 +1,4 @@
 com:
 	gcc client.c -o client
 clean:
-	rm -f *.out
+	rm -f client

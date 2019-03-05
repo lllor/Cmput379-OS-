@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-
+#include <string.h>
  
 int main(int argc, char **argv)
 
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     xmlChar *szKey;          //临时字符串变量
     
     
-    doc = xmlReadFile("CreateXml.xml","GB2312",XML_PARSE_RECOVER);
+    doc = xmlReadFile("copy.xml","GB2312",XML_PARSE_RECOVER);
     //解析文件
     //检查解析文档是否成功，如果不成功，libxml将报错并停止解析。
     //一个常见错误是不适当的编码，XML标准文档除了用UTF-8或UTF-16外还可用其它编码保存
@@ -42,7 +42,10 @@ int main(int argc, char **argv)
         if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
             szKey = xmlNodeGetContent(curNode);
             printf("newNode1: %s\n", szKey);
-            xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST "1.txt");
+            if(strcmp(szKey,"0000") == 0){
+            	xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST "1.txt");
+            }
+            
 
             xmlFree(szKey);
         }
@@ -53,7 +56,7 @@ int main(int argc, char **argv)
         curNode = curNode->next;
 
     }
-    int nRel = xmlSaveFile("CreateXml.xml",doc);
+    int nRel = xmlSaveFile("copy.xml",doc);
     if (nRel != -1)
     {
         printf("一个xml文档被创建，写入%d个字节\n", nRel);
@@ -61,13 +64,13 @@ int main(int argc, char **argv)
     //释放文档内节点动态申请的内存
     xmlFreeDoc(doc);
 //=================================================================================================
-//新建条例
+//添加条例
 	// xmlDocPtr doc;           //定义解析文件指针
  //    xmlNodePtr curNode;      //定义结点指针
  //    xmlChar *szKey;          //临时字符串变量
  //    char *szDocName;
 
- //    doc = xmlReadFile("CreateXml.xml","GB2312",XML_PARSE_RECOVER);
+ //    doc = xmlReadFile("copy.xml","GB2312",XML_PARSE_RECOVER);
  //    if (NULL == doc) {
  //        fprintf(stderr,"Document not parsed successfully.");
  //        return -1;
@@ -79,11 +82,13 @@ int main(int argc, char **argv)
  //        xmlFreeDoc(doc);
  //        return -1;
  //    }
+ //    xmlNodePtr node2 = xmlNewNode(NULL, BAD_CAST "file");
  //    xmlNodePtr node = xmlNewNode(NULL, BAD_CAST "file");
  //    xmlAddChild(curNode,node);
+ //    xmlAddChild(curNode,node2);
  //    xmlNewTextChild(node, NULL, BAD_CAST "hashname", BAD_CAST "1234455667789890");
-
- //    int nRel = xmlSaveFile("CreateXml.xml",doc);
+ //    xmlNewTextChild(node2, NULL, BAD_CAST "hashname", BAD_CAST "0000");
+ //    int nRel = xmlSaveFile("copy.xml",doc);
  //    if (nRel != -1)
  //    {
  //        printf("一个xml文档被创建，写入%d个字节\n", nRel);
@@ -98,9 +103,9 @@ int main(int argc, char **argv)
  
     // xmlNodePtr root_node = xmlNewNode(NULL,BAD_CAST "root");    
     // xmlDocSetRootElement(doc,root_node);        //设置根节点
-    
+    // char name[7] = "hello";
     // //在根节点中直接创建节点
-    // xmlNewTextChild(root_node, NULL, BAD_CAST "newNode1", BAD_CAST "newNode1 content");
+    // xmlNewTextChild(root_node, NULL, BAD_CAST "newNode1", BAD_CAST name);
     // xmlNewTextChild(root_node, NULL, BAD_CAST "newNode2", BAD_CAST "newNode2 content");
     // xmlNewTextChild(root_node, NULL, BAD_CAST "newNode3", BAD_CAST "newNode3 content");
 
@@ -127,12 +132,15 @@ int main(int argc, char **argv)
     // //xmlKeepBlanksDefault(0);
     // //xmlDocDumpFormatMemoryEnc(doc, &result, &size, "UTF-8", 1);
 
-    // int nRel = xmlSaveFile("CreateXml.xml",doc);
+    // int nRel = xmlSaveFile(".dedup",doc);
     // if (nRel != -1)
     // {
     //     printf("一个xml文档被创建，写入%d个字节\n", nRel);
     // }
     // //释放文档内节点动态申请的内存
     // xmlFreeDoc(doc);
+    // rename(".dedup","copy.xml");
+    //int ret = rename("dudup.txt",".dedup");
+    //printf("%d",ret);
     return 1;
 }

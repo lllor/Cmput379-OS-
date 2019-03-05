@@ -10,6 +10,8 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <openssl/md5.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 #define portnum 9999
 #define FILE_SIZE 500 
@@ -17,10 +19,30 @@
 int new_fd = 0; 
 void *net_thread(void * fd);
 char *convertMD5(char filename[],char *result);
+int updatexml(char filename[],char md5[]);
+void createxml();
 void download(void * fd,char input[]);
 void update(void * fd,char input[]);
 int main()
 {
+	int checker = access(".dedup",0);
+	if (checker == 0){
+		rename(".dedup","repository.xml");
+	}
+	else{
+		xmlChar *result = NULL;
+    	int size = 0;
+    	xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");  //定义文档和节点指针
+ 
+    	xmlNodePtr root_node = xmlNewNode(NULL,BAD_CAST "repository");    
+    	xmlDocSetRootElement(doc,root_node);
+    	xmlSaveFile("repository.xml",doc);
+    	xmlFreeDoc(doc);
+	}
+
+
+
+
 	int serverSocket, newSocket;
 	struct sockaddr_storage serverStorgae;
 	socklen_t addr_size;
@@ -142,15 +164,10 @@ void *net_thread(void * fd)
       					break;
       		case 'u':  {
       					update(fd,temp_buffer);	
-      					char md5[MD5_DIGEST_LENGTH*2]={0};
-    					convertMD5(temp_buffer+2,md5); 
-    					int ret = rename(temp_buffer+2,md5);
-    					printf("%s\n",md5);
-    					if (ret ==0){
-    						printf("rename successfully\n");
-    					}else{
-    						printf("unable to rename");
-    					}
+      			 		//char *md5;
+    					//md5 = convertMD5(temp_buffer+2,md5); 
+    					
+    					//updatexml(temp_buffer+2,md5);
       					break;
       					}
       		case 'd':	download(fd,temp_buffer);
@@ -169,7 +186,7 @@ void *net_thread(void * fd)
 void update(void * fd,char input[]){
 	int newSocket=*((int *)fd);
 	int file2_fp;
-	char buffer[BUFFER_SIZE];
+	char buffer[1024];
 	char file_name[FILE_SIZE];
 	
 	memset(file_name,0, sizeof(file_name) );
@@ -184,9 +201,12 @@ void update(void * fd,char input[]){
     
     int length = 0; 
 	memset( buffer,0, sizeof(buffer) );
-   
+	printf("start recving\n");
+   	//char *content;
     while((length = read(newSocket, buffer, sizeof(buffer))) > 0) 
     { 
+    	printf("buffer is %s\n",buffer);
+    //	strcat(content,buffer);
         if( write( file_fp, buffer, length ) < length) 
         { 
             printf("File:\t%s Write Failed\n", file_name); 
@@ -200,9 +220,10 @@ void update(void * fd,char input[]){
     }
     close(file_fp);
     
-    
+    //printf("%s\n",content);
 
     printf("File:%s update Successful!\n", file_name);
+    return;
 
 }
 void download(void * fd,char input[]){
@@ -265,16 +286,68 @@ char *convertMD5(char filename[],char *result){
     //char result[MD5_DIGEST_LENGTH*2] ={0}; 
     char temp[2]={0};
     for(i = 0; i < MD5_DIGEST_LENGTH; i++){
-        //printf("%02x", c[i]);
-        //printf("%lu,%x\n",sizeof(c[i]),c[i]);
         sprintf(temp,"%02x",c[i]);
         strcat(result,temp);
-
-        //result[i] == (hex)c[i];
     } 
-    //printf (" %s\n", filename);
-    
-    //printf("%s\n",result);
-
+    //rename(filename,result);
 	return result;
+}
+int updatexml(char filename[],char* md5){
+	xmlDocPtr doc;           //定义解析文件指针
+    xmlNodePtr curNode;      //定义结点指针
+    xmlChar *szKey;          //临时字符串变量
+    char *szDocName;
+    int flag = 0;
+    
+    doc = xmlReadFile("repository.xml","GB2312",XML_PARSE_RECOVER);
+    
+    if (NULL == doc) {
+        fprintf(stderr,"Document not parsed successfully.");
+        return -1;
+    }
+    //获取根节点
+    curNode = xmlDocGetRootElement(doc);
+    if (NULL == curNode) {
+        fprintf(stderr,"empty document");
+        xmlFreeDoc(doc);
+        return -1;
+    }
+
+    curNode = curNode->xmlChildrenNode;
+    xmlNodePtr propNodePtr = curNode;
+    while(curNode != NULL) {
+        //取出节点中的内容
+        if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
+            szKey = xmlNodeGetContent(curNode);
+            //printf("newNode1: %s\n", szKey);
+            if(strcmp(szKey,md5)){
+            	xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST filename);
+            	flag = 1;
+            }
+            
+
+            xmlFree(szKey);
+        }
+        //查找带有属性attribute的节点
+        if (xmlHasProp(curNode,BAD_CAST "attribute")) {
+            propNodePtr = curNode;
+        }
+        curNode = curNode->next;
+
+    }
+    if(flag == 0){
+    	xmlNodePtr node = xmlNewNode(NULL, BAD_CAST "file");
+    	xmlAddChild(curNode,node);
+    	xmlNewTextChild(node, NULL, BAD_CAST "hashname", BAD_CAST md5);
+    	xmlNewTextChild(node, NULL, BAD_CAST "knownas", BAD_CAST filename);
+    }
+    
+    int nRel = xmlSaveFile("repository.xml",doc);
+    if (nRel != -1)
+    {
+        printf("success");
+    }
+    //释放文档内节点动态申请的内存
+    xmlFreeDoc(doc);
+	return 1;
 }
