@@ -137,12 +137,12 @@ void *net_thread(void * fd)
 {
 	//pthread_detach(pthread_self()); //线程分离
 	int newSocket=*((int *)fd);
-	int file2_fp;
 	
+	char buffer[BUFFER_SIZE];
 	while(1)
 	{
 		// recv函数接收数据到缓冲区buffer中 
-        char buffer[BUFFER_SIZE];
+        
         memset( buffer,0, sizeof(buffer) );		
         if(read(newSocket, buffer, sizeof(buffer)) < 0) 
         { 
@@ -158,6 +158,8 @@ void *net_thread(void * fd)
         strncpy(temp_buffer, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer));
         memset( buffer,0, sizeof(buffer) );
         printf("%s\n",temp_buffer);
+        char *token = strtok(temp_buffer,"\0");
+        printf("%s\n",token);
         switch(temp_buffer[0])
       	{
       		case 'l':	
@@ -201,6 +203,7 @@ void update(void * fd,char input[]){
     
     int length = 0; 
 	memset( buffer,0, sizeof(buffer) );
+
 	printf("start recving\n");
    	//char *content;
     while((length = read(newSocket, buffer, sizeof(buffer))) > 0) 

@@ -73,42 +73,67 @@ int main()
 int updatefile(int sock_desc,char input[])
 {
 	  char file_name[FILE_SIZE];
-	  char buffer[1024];
-	  memset(file_name,0,sizeof(file_name));
+	  char buffer[1024] = "0x02";
+	  
+    memset(file_name,0,sizeof(file_name));
   	strncpy(file_name,input+2,499-2);
-  
+    
+    FILE *inFile = fopen (file_name, "r");
   	int file2_fp = open(file_name,O_RDONLY,0777); 
+    //buffer="0x02";
+    strcat(buffer,input+2);
+    strcat(buffer,"\0");
     
-    if(write(sock_desc, input, sizeof(file_name)) < 0) 
-    { 
-        perror("Send File Name Failed:"); 
-        exit(1); 
-    }
+    fseek(inFile, 0L, SEEK_END);
+    long int sz = ftell(inFile);
+    //printf("%lu\n",sz);
+    fseek(inFile, 0L, SEEK_SET);
     
-    if(file2_fp<0) 
-    { 
-        printf("File:%s Not Found\n", file_name); 
-        return 0;
-    } 
-    else 
-    { 
-        int length = 0; 
-	      memset( buffer,0, sizeof(buffer) );
-           // 每读取一段数据，便将其发送给服务器，循环直到文件读完为止 
-        while( (length = read(file2_fp, buffer, sizeof(buffer))) > 0  )    
-        { 
-            printf("buffer is:%s\n",buffer);  
-            if(write(sock_desc, buffer, length) < 0) 
-            { 
-                printf("Send File:%s Failed.\n", file_name); 
-                break; 
-            } 
-            memset( buffer,0, sizeof(buffer) );
-        } 
+    const int n = snprintf(NULL, 0, "%lu", sz);
+    char buf[n+1];
+    int c = snprintf(buf, n+1, "%lu", sz);
+    //assert(buf[n] == '\0');
+    //assert(c == n);
+    strcat(buffer,buf);
+    printf("%s\n",buffer);
 
-        close(file2_fp); 
-        printf("File:%s update Successful!\n", file_name); 
+    if(send(sock_desc,buffer,sizeof(buffer),0) == -1)
+    {
+        perror("Send File Name Failed:"); 
+        exit(1);
     }
+
+    // if(write(sock_desc, input, sizeof(file_name)) < 0) 
+    // { 
+    //     perror("Send File Name Failed:"); 
+    //     exit(1); 
+    // }
+    
+    // if(file2_fp<0) 
+    // { 
+    //     printf("File:%s Not Found\n", file_name); 
+    //     return 0;
+    // } 
+    // else 
+    // { 
+    //     int length = 0; 
+	   //    memset( buffer,0, sizeof(buffer) );
+    //        // 每读取一段数据，便将其发送给服务器，循环直到文件读完为止 
+    //     while( (length = read(file2_fp, buffer, sizeof(buffer))) > 0  )    
+    //     { 
+    //         printf("buffer is:%s\n",buffer);
+    //         int fl = write(sock_desc, buffer, length);
+    //         if( fl< 0) 
+    //         { 
+    //             printf("Send File:%s Failed.\n", file_name); 
+    //             break; 
+    //         } 
+    //         memset( buffer,0, sizeof(buffer) );
+    //     } 
+        
+    //     close(file2_fp); 
+    //     printf("File:%s update Successful!\n", file_name); 
+    // }
     return 1;
 }
 int downloadfile(int sock_desc,char input[])
