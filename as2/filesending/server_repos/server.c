@@ -191,20 +191,30 @@ void update(void * fd,char input[]){
 	{
 		memset( buffer,0, sizeof(buffer) );
 		x = *(int *)size;
-		printf("size is %s which is %d\n",size,x);
+		//printf("size is %s which is %d\n",size,x);
 
 	 	if(size[0] != 0){
 	 		break;
 	 	}
 	}
-
-	//unsigned char len[4];
-	//strncpy(len,size,4);
-	
+	int RecvSize=0;
+	// char *data;
+	// data = (char *)malloc((x+1) * sizeof(char));
+	//char content [x]	
 	printf("size is %d---------------------------------------\n",x);
-	//printf("update: %s which has length:\n",file_name,file_leng);
+	// while(x>0) 
+ //    { 
+ //    	RecvSize = recv(newSocket,data+RecvSize,x,0);
+ //    	if(RecvSize == -1){
+ //    		perror("Recieve File Content Failed:"); 
+ //            exit(1);
+ //    	}
+
+ //    	x = x- RecvSize;
+ //    }
 	
-	
+	// printf("%s\n",data);
+	// free(data);
 	// memset(file_name,0, sizeof(file_name) );
 	// strncpy(file_name,input+2,499-2);
 
