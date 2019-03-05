@@ -138,7 +138,7 @@ void *net_thread(void * fd)
 	//pthread_detach(pthread_self()); //线程分离
 	int newSocket=*((int *)fd);
 	
-	char buffer[BUFFER_SIZE];
+	char buffer[FILE_SIZE];
 	while(1)
 	{
 		// recv函数接收数据到缓冲区buffer中 
@@ -152,33 +152,25 @@ void *net_thread(void * fd)
 		
         // 然后从buffer(缓冲区)拷贝到file_name中 
         //char file_name[FILE_SIZE]; 
-        char temp_buffer[FILE_SIZE];
+        char temp_buffer[5];
 		//memset( file_name,0, sizeof(file_name) );
-		memset( temp_buffer,0, sizeof(temp_buffer) );	
-        strncpy(temp_buffer, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer));
-        memset( buffer,0, sizeof(buffer) );
+		memset( temp_buffer,'\0', sizeof(temp_buffer) );	
+        //strncpy(temp_buffer, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer));
+        strncpy(temp_buffer,buffer,4);
+        printf("buffer is %s\n",buffer);
         printf("%s\n",temp_buffer);
-        char *token = strtok(temp_buffer,"\0");
-        printf("%s\n",token);
-        switch(temp_buffer[0])
-      	{
-      		case 'l':	
-      					break;
-      		case 'u':  {
-      					update(fd,temp_buffer);	
-      			 		//char *md5;
-    					//md5 = convertMD5(temp_buffer+2,md5); 
-    					
-    					//updatexml(temp_buffer+2,md5);
-      					break;
-      					}
-      		case 'd':	download(fd,temp_buffer);
-      					break;
-      		case 'r':
-      					break;
-      		case 'q':
-      					break;
-      	}
+        printf("%d\n",(strcmp(temp_buffer,"0x02")));
+        if(strcmp(temp_buffer,"0x02") == 0){
+        	printf("ready update\n");
+        	strncpy(temp_buffer,buffer+4,499-4);
+        	printf("%s\n",temp_buffer);
+        	update(fd,temp_buffer);
+        }
+        else{
+        	printf("Diff\n");
+        }
+        memset( buffer,0, sizeof(buffer) );
+        
      
 		
         
@@ -188,44 +180,66 @@ void *net_thread(void * fd)
 void update(void * fd,char input[]){
 	int newSocket=*((int *)fd);
 	int file2_fp;
-	char buffer[1024];
-	char file_name[FILE_SIZE];
 	
-	memset(file_name,0, sizeof(file_name) );
-	strncpy(file_name,input+2,499-2);
-
-	int file_fp = open(file_name,O_CREAT|O_RDWR,0777); 
-    if(file_fp<0 ) 
-    { 
-        printf("File:\t%s Can Not Open To Write\n", file_name); 
-        exit(1); 
-    } 
-    
-    int length = 0; 
+	char buffer[1024];
+	unsigned char size[4]={0};
 	memset( buffer,0, sizeof(buffer) );
+	int x;
+	int length;
+	//while((length = read(newSocket, size, sizeof(size))) > 0) 
+	while(recv(newSocket,size,sizeof(size),0)!=0)
+	{
+		memset( buffer,0, sizeof(buffer) );
+		x = *(int *)size;
+		printf("size is %s which is %d\n",size,x);
 
-	printf("start recving\n");
-   	//char *content;
-    while((length = read(newSocket, buffer, sizeof(buffer))) > 0) 
-    { 
-    	printf("buffer is %s\n",buffer);
-    //	strcat(content,buffer);
-        if( write( file_fp, buffer, length ) < length) 
-        { 
-            printf("File:\t%s Write Failed\n", file_name); 
-            break; 
-        } 
-		if(length < sizeof(buffer))
-		{
-			break;
-		}
-        memset( buffer,0, sizeof(buffer) );
-    }
-    close(file_fp);
+	 	if(size[0] != 0){
+	 		break;
+	 	}
+	}
+
+	//unsigned char len[4];
+	//strncpy(len,size,4);
+	
+	printf("size is %d---------------------------------------\n",x);
+	//printf("update: %s which has length:\n",file_name,file_leng);
+	
+	
+	// memset(file_name,0, sizeof(file_name) );
+	// strncpy(file_name,input+2,499-2);
+
+	// int file_fp = open(file_name,O_CREAT|O_RDWR,0777); 
+ //    if(file_fp<0 ) 
+ //    { 
+ //        printf("File:\t%s Can Not Open To Write\n", file_name); 
+ //        exit(1); 
+ //    } 
     
-    //printf("%s\n",content);
+ //    int length = 0; 
+	// memset( buffer,0, sizeof(buffer) );
 
-    printf("File:%s update Successful!\n", file_name);
+	// printf("start recving\n");
+ //   	//char *content;
+ //    while((length = read(newSocket, buffer, sizeof(buffer))) > 0) 
+ //    { 
+ //    	printf("buffer is %s\n",buffer);
+ //    //	strcat(content,buffer);
+ //        if( write( file_fp, buffer, length ) < length) 
+ //        { 
+ //            printf("File:\t%s Write Failed\n", file_name); 
+ //            break; 
+ //        } 
+	// 	if(length < sizeof(buffer))
+	// 	{
+	// 		break;
+	// 	}
+ //        memset( buffer,0, sizeof(buffer) );
+ //    }
+ //    close(file_fp);
+    
+ //    //printf("%s\n",content);
+
+ //    printf("File:%s update Successful!\n", file_name);
     return;
 
 }

@@ -12,7 +12,8 @@
 #define portnum 9999
 #define FILE_SIZE 500 
 #define BUFFER_SIZE 1024
- 
+
+
 int downloadfile(int sock_desc,char input[]);
 int updatefile(int sock_desc,char input[]);
 int main()
@@ -79,29 +80,34 @@ int updatefile(int sock_desc,char input[])
   	strncpy(file_name,input+2,499-2);
     
     FILE *inFile = fopen (file_name, "r");
-  	int file2_fp = open(file_name,O_RDONLY,0777); 
+  	//int file2_fp = open(file_name,O_RDONLY,0777); 
     //buffer="0x02";
     strcat(buffer,input+2);
     strcat(buffer,"\0");
     
+    
     fseek(inFile, 0L, SEEK_END);
     long int sz = ftell(inFile);
-    //printf("%lu\n",sz);
     fseek(inFile, 0L, SEEK_SET);
     
-    const int n = snprintf(NULL, 0, "%lu", sz);
-    char buf[n+1];
-    int c = snprintf(buf, n+1, "%lu", sz);
-    //assert(buf[n] == '\0');
-    //assert(c == n);
-    strcat(buffer,buf);
-    printf("%s\n",buffer);
+    char size[4];//4byte size with big-endianness
+    //size[5] = 0xFF;
+    size[3] == (sz >> 24) & 0xFF;
+    size[2] = (sz >> 16) & 0xFF;
+    size[1] = (sz >> 8) & 0xFF;
+    size[0] = sz & 0xFF;
 
+    //int x = *(int *)size;//convert 4bytes to int
+    //printf("%d\n", x);
+    //strcat(buffer,size);
+    printf("%s\n",buffer);
+    //printf("%s\n",buf);
     if(send(sock_desc,buffer,sizeof(buffer),0) == -1)
     {
         perror("Send File Name Failed:"); 
         exit(1);
     }
+    send(sock_desc,size,sizeof(size),0);
 
     // if(write(sock_desc, input, sizeof(file_name)) < 0) 
     // { 
