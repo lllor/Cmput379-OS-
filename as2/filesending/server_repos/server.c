@@ -18,11 +18,12 @@
 #define BUFFER_SIZE 1024
 int new_fd = 0; 
 void *net_thread(void * fd);
-char *convertMD5(char filename[],char *result);
-int updatexml(char filename[],char md5[]);
-void createxml();
+char *convertMD5(const char *str, int length);
+int updatexml(char filename[],const char *md5,const char *data);
 void download(void * fd,char input[]);
 void update(void * fd,char input[]);
+//void createxml(char filename[], char *content);
+
 int main()
 {
 	int checker = access(".dedup",0);
@@ -33,9 +34,10 @@ int main()
 		xmlChar *result = NULL;
     	int size = 0;
     	xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");  //定义文档和节点指针
- 
+ 		char name[7] = "hello";
     	xmlNodePtr root_node = xmlNewNode(NULL,BAD_CAST "repository");    
     	xmlDocSetRootElement(doc,root_node);
+    	xmlNewTextChild(root_node, NULL, BAD_CAST "newNode1", BAD_CAST name);
     	xmlSaveFile("repository.xml",doc);
     	xmlFreeDoc(doc);
 	}
@@ -137,12 +139,12 @@ void *net_thread(void * fd)
 {
 	//pthread_detach(pthread_self()); //线程分离
 	int newSocket=*((int *)fd);
-	int file2_fp;
 	
+	char buffer[FILE_SIZE];
 	while(1)
 	{
 		// recv函数接收数据到缓冲区buffer中 
-        char buffer[BUFFER_SIZE];
+        
         memset( buffer,0, sizeof(buffer) );		
         if(read(newSocket, buffer, sizeof(buffer)) < 0) 
         { 
@@ -152,31 +154,25 @@ void *net_thread(void * fd)
 		
         // 然后从buffer(缓冲区)拷贝到file_name中 
         //char file_name[FILE_SIZE]; 
-        char temp_buffer[FILE_SIZE];
+        char temp_buffer[5];
 		//memset( file_name,0, sizeof(file_name) );
-		memset( temp_buffer,0, sizeof(temp_buffer) );	
-        strncpy(temp_buffer, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer));
+		memset( temp_buffer,'\0', sizeof(temp_buffer) );	
+        //strncpy(temp_buffer, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer));
+        strncpy(temp_buffer,buffer,4);
+        printf("buffer is %s\n",buffer);
+        //printf("%s\n",temp_buffer);
+        //printf("%d\n",(strcmp(temp_buffer,"0x02")));
+        if(strcmp(temp_buffer,"0x02") == 0){
+        	printf("ready update\n");
+        	strncpy(temp_buffer,buffer+4,499-4);
+        	printf("%s\n",temp_buffer);
+        	update(fd,temp_buffer);
+        }
+        else{
+        	printf("Diff\n");
+        }
         memset( buffer,0, sizeof(buffer) );
-        printf("%s\n",temp_buffer);
-        switch(temp_buffer[0])
-      	{
-      		case 'l':	
-      					break;
-      		case 'u':  {
-      					update(fd,temp_buffer);	
-      			 		//char *md5;
-    					//md5 = convertMD5(temp_buffer+2,md5); 
-    					
-    					//updatexml(temp_buffer+2,md5);
-      					break;
-      					}
-      		case 'd':	download(fd,temp_buffer);
-      					break;
-      		case 'r':
-      					break;
-      		case 'q':
-      					break;
-      	}
+        
      
 		
         
@@ -185,44 +181,53 @@ void *net_thread(void * fd)
 }
 void update(void * fd,char input[]){
 	int newSocket=*((int *)fd);
-	int file2_fp;
-	char buffer[1024];
-	char file_name[FILE_SIZE];
+
 	
-	memset(file_name,0, sizeof(file_name) );
-	strncpy(file_name,input+2,499-2);
+	char buffer[BUFFER_SIZE];
+	unsigned char size[4]={0};
+	//memset( buffer,0, sizeof(buffer) );
+	int x;
+	unsigned int length;
+	int counter = 0;
+	while((length = read(newSocket, size, sizeof(size))) > 0) 
+	//while(length = recv(newSocket,size,sizeof(size),0)>0)
+	{
+		counter ++;
+		
+		x = *(int *)size;
+		printf("size is %d which is %d, counter : %d\n",length,x,counter);
+		printf("%x %x %x %x \n",size[3],size[2],size[1],size[0]);
+	 	if(x!=0){
+	 		break;
+	 	}
+	 	memset(size,0, sizeof(size) );
+	}
+	// memset(buffer,0,BUFFER_SIZE);
+	char *data;
+	data = (char *)malloc((x+1) * sizeof(char));
+	int RecvSize=0;
+	//char content [x]	
+	printf("size is %d---------------------------------------\n",x);
+	while(x>0) 
+    { 
+    	RecvSize = recv(newSocket,data+RecvSize,x,0);
+    	if(RecvSize == -1){
+    		perror("Recieve File Content Failed:"); 
+            exit(1);
+    	}
 
-	int file_fp = open(file_name,O_CREAT|O_RDWR,0777); 
-    if(file_fp<0 ) 
-    { 
-        printf("File:\t%s Can Not Open To Write\n", file_name); 
-        exit(1); 
-    } 
-    
-    int length = 0; 
-	memset( buffer,0, sizeof(buffer) );
-	printf("start recving\n");
-   	//char *content;
-    while((length = read(newSocket, buffer, sizeof(buffer))) > 0) 
-    { 
-    	printf("buffer is %s\n",buffer);
-    //	strcat(content,buffer);
-        if( write( file_fp, buffer, length ) < length) 
-        { 
-            printf("File:\t%s Write Failed\n", file_name); 
-            break; 
-        } 
-		if(length < sizeof(buffer))
-		{
-			break;
-		}
-        memset( buffer,0, sizeof(buffer) );
+    	x = x- RecvSize;
     }
-    close(file_fp);
-    
-    //printf("%s\n",content);
+	
+	printf("%s\n",data);
+	char *md5 = convertMD5(data,strlen(data));
+	printf("%s\n",md5);
+	updatexml(input,md5,data);
 
-    printf("File:%s update Successful!\n", file_name);
+	free(md5);
+	free(data);
+	
+ //    printf("File:%s update Successful!\n", file_name);
     return;
 
 }
@@ -268,31 +273,33 @@ void download(void * fd,char input[]){
      }
      return;   
 }
-char *convertMD5(char filename[],char *result){
-	
-	unsigned char c[MD5_DIGEST_LENGTH];
-	int i;
-    FILE *inFile = fopen (filename, "rb");
-    MD5_CTX mdContext;
-    int bytes;
-    unsigned char data[1024];
+char *convertMD5(const char *str,int length){
+	int n;
+    MD5_CTX c;
+    unsigned char digest[16];
+    char *out = (char*)malloc(33);
 
-    if (inFile == NULL) 
-	{
-        printf ("%s can't be opened.\n", filename);
-        return 0;
+    MD5_Init(&c);
+
+    while (length > 0) {
+        if (length > 512) {
+            MD5_Update(&c, str, 512);
+        } else {
+            MD5_Update(&c, str, length);
+        }
+        length -= 512;
+        str += 512;
     }
 
-    //char result[MD5_DIGEST_LENGTH*2] ={0}; 
-    char temp[2]={0};
-    for(i = 0; i < MD5_DIGEST_LENGTH; i++){
-        sprintf(temp,"%02x",c[i]);
-        strcat(result,temp);
-    } 
-    //rename(filename,result);
-	return result;
+    MD5_Final(digest, &c);
+
+    for (n = 0; n < 16; ++n) {
+        snprintf(&(out[n*2]), 16*2, "%02x", (unsigned int)digest[n]);
+    }
+
+    return out;
 }
-int updatexml(char filename[],char* md5){
+int updatexml(char filename[],const char* md5,const char *data){
 	xmlDocPtr doc;           //定义解析文件指针
     xmlNodePtr curNode;      //定义结点指针
     xmlChar *szKey;          //临时字符串变量
@@ -336,17 +343,22 @@ int updatexml(char filename[],char* md5){
 
     }
     if(flag == 0){
+    	curNode = xmlDocGetRootElement(doc);
+    	printf("add new node\n");
     	xmlNodePtr node = xmlNewNode(NULL, BAD_CAST "file");
     	xmlAddChild(curNode,node);
     	xmlNewTextChild(node, NULL, BAD_CAST "hashname", BAD_CAST md5);
     	xmlNewTextChild(node, NULL, BAD_CAST "knownas", BAD_CAST filename);
+    	FILE *fp = fopen(md5, "ab");
+    	if (fp != NULL)
+    	{
+        	fputs(data, fp);
+        	fclose(fp);
+    	}
     }
     
     int nRel = xmlSaveFile("repository.xml",doc);
-    if (nRel != -1)
-    {
-        printf("success");
-    }
+
     //释放文档内节点动态申请的内存
     xmlFreeDoc(doc);
 	return 1;
