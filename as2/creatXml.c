@@ -4,7 +4,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <string.h>
- 
+xmlNodePtr findNodeByName(xmlNodePtr rootnode, const xmlChar * nodename,const char * filename);
 int main(int argc, char **argv)
 
 {
@@ -29,22 +29,46 @@ int main(int argc, char **argv)
         xmlFreeDoc(doc);
         return -1;
     }
+    // xmlNodePtr temp;
+    // temp = findNodeByName(curNode,(const xmlChar *) "knownas","1.txt");
+    // if(temp != NULL){
+    //     szKey = xmlNodeGetContent(temp);
+    //     printf("%s\n",szKey);
+    // }
+    // else{
+    //     printf("errpr");
+    // }
+    
     //确认根元素名字是否符合
     // if (xmlStrcmp(curNode->name, BAD_CAST "root")) {
     //     fprintf(stderr,"document of the wrong type, root node != root");
     //     xmlFreeDoc(doc);
     //     return -1;
     // }
+    int flag;
     curNode = curNode->xmlChildrenNode;
     xmlNodePtr propNodePtr = curNode;
+    xmlNodePtr tepNode;      //定义结点指针
     while(curNode != NULL) {
         //取出节点中的内容
         if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
-            szKey = xmlNodeGetContent(curNode);
-            printf("newNode1: %s\n", szKey);
-            if(strcmp(szKey,"0000") == 0){
-            	xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST "1.txt");
+            tepNode = curNode;
+            curNode = curNode->children;
+            while(curNode !=NULL){
+                szKey = xmlNodeGetContent(curNode);
+                if(strcmp(szKey,"1.txt") == 0){
+                    printf("md5: %s\n", xmlNodeGetContent(tepNode->xmlChildrenNode));
+                }
+                
+                curNode = curNode->next;
             }
+            curNode = tepNode;
+            // tepNode = curNode -> xmlChildrenNode;
+            // szKey = xmlNodeGetContent(tepNode);
+            // printf("newNode1: %s\n", szKey);
+            //if(strcmp(szKey,"0000") == 0){
+            //	xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST "1.txt");
+            //}
             
 
             xmlFree(szKey);
@@ -143,4 +167,40 @@ int main(int argc, char **argv)
     //int ret = rename("dudup.txt",".dedup");
     //printf("%d",ret);
     return 1;
+}
+
+xmlNodePtr findNodeByName(xmlNodePtr rootnode, const xmlChar * nodename, const char * filename)
+{
+    xmlChar *szKey;
+    xmlNodePtr node = rootnode;
+    if(node == NULL){
+        printf("Document is empty!");
+        return NULL;
+    }
+
+    while(node != NULL){
+
+        if(!xmlStrcmp(node->name, nodename)){
+            return node; 
+        }
+        else if (node->children != NULL) {
+
+            xmlNodePtr intNode =  findNodeByName(node->children, nodename, filename); 
+            if(!xmlStrcmp(intNode->name, (const xmlChar *) "file")){
+                return intNode;
+            }
+            if(intNode != NULL) {
+                szKey = xmlNodeGetContent(intNode);
+                
+                if(strcmp(szKey,filename) == 0){
+                    //printf("%s\n",szKey);
+                    printf("current node is %s\n",xmlNodeGetContent(node));
+                    //return node;
+                }
+                return intNode;
+            }
+        }
+        node = node->next;
+    }
+    return NULL;
 }

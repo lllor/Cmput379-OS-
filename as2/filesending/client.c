@@ -85,135 +85,150 @@ int updatefile(int sock_desc,char input[])
         printf("File:%s Not Found\n", file_name); 
         return 0;
     } 
-    //int file2_fp = open(file_name,O_RDONLY,0777); 
-    //buffer="0x02";
+    fseek(inFile, 0L, SEEK_END);
+    int sz = ftell(inFile);//size to send
+    fseek(inFile, 0L, SEEK_SET);//set the file pointer back to beginning
     
+    unsigned int num = sz;
+    unsigned int x;
+    unsigned char a[4];
 
+    a[3] = (num>>24) & 0xFF;
+    a[2] = (num>>16) & 0xFF;
+    a[1] = (num>>8) & 0xFF;
+    a[0] = num & 0xFF;
+    printf("%x %x %x %x \n",a[3],a[2],a[1],a[0]);
+    x = *(int *)a;
+    printf("%d\n", x);
 
     strcat(buffer,input+2);
     strcat(buffer,"\0");
-    
-    
-    char *data;
-    int *length;
-    
-    fseek(inFile, 0L, SEEK_END);
-    long int sz = ftell(inFile);//size to send
-    *length = ftell(inFile);//size to malloc
-    data = (char *)malloc((*length+1) * sizeof(char));//malloc enough space for reading
-    fseek(inFile, 0L, SEEK_SET);//set the file pointer back to beginning
-    
-    *length = fread(data, 1, *length, inFile);//read
-   // data[*length] = '\0';//set the null
-    
-    
-    char size[4];//4byte size with big-endianness
-    //size[5] = 0xFF;
-    size[3] == (sz >> 24) & 0xFF;
-    size[2] = (sz >> 16) & 0xFF;
-    size[1] = (sz >> 8) & 0xFF;
-    size[0] = sz & 0xFF;
-
-    printf("%s\n",buffer);
-    if(send(sock_desc,buffer,sizeof(buffer),0) == -1)
+    if(write(sock_desc,buffer,sizeof(buffer)) < 0)
     {
         perror("Send File Name Failed:"); 
         exit(1);
     }
-    send(sock_desc,size,sizeof(size),0);//tell sever the size of file
+    memset(buffer,0,sizeof(buffer));
+    strncpy(buffer,a,4);
+    printf("%s\n",buffer);
+    int SendSize = 0;
+    if(write(sock_desc,buffer,4) < 0)
+    {
+        perror("Send File Name Failed:"); 
+        exit(1);
+    }
+    int length = sz;
+    char *data;
+    data = (char *)malloc(length*sizeof(char));
+    memset(data,0, sizeof(data) );
+    fread(data,1,length,inFile);
+    printf("%s",data);
+    int rest = num;
+    while(rest > 0){
+        printf("%d\n",rest);
+        //strncpy(buffer,data,sizeof(buffer));
+
+        SendSize = send(sock_desc,data + SendSize,rest,0);
+        if(SendSize == -1){
+            perror("Send File Content Failed:"); 
+            exit(1);
+        }
+        rest = rest-SendSize;
+    }
+
+    
+    
+
+    
+    
+
+    
 
     
     // int SendSize = 0; 
-    // memset( buffer,0, sizeof(buffer) );
-    // while (sz>0){
-    //     strncpy(buffer,data,sizeof(buffer));
+    //memset( buffer,0, BUFFER_SIZE);
+    
 
-    //     SendSize = send(sock_desc,buffer,strlen(buffer),0);
-    //     if(SendSize == -1){
-    //         perror("Send File Content Failed:"); 
-    //         exit(1);
-    //     }
-    //     sz = sz-SendSize;
-    // }
-
-
-
-    // while( (length = fread(buffer,0, sizeof(buffer),fp)) > 0  )    
+    // int read_len;
+    // int send_len;
+    // //while( (length = fread(buffer,0, sizeof(buffer),fp)) > 0  )
+    // while ((read_len = fread(buffer,sizeof(char),BUFFER_SIZE,inFile))>0)    
     // { 
     //     printf("buffer is:%s\n",buffer);
-    //     int fl = write(sock_desc, buffer, length);
-    //     if( fl< 0) 
+    //     send_len = send(sock_desc, buffer, read_len,0);
+    //     if(send_len< 0) 
     //     { 
     //         printf("Send File:%s Failed.\n", file_name); 
     //         break; 
     //     } 
-    //     memset( buffer,0, sizeof(buffer) );
+    //     memset( buffer,0, BUFFER_SIZE );
     // } 
-    //free(data);
-    fclose(inFile); 
+
+
+    // free(data);
+    // fclose(inFile); 
     printf("File:%s update Successful!\n", file_name); 
     
     return 1;
 }
 int downloadfile(int sock_desc,char input[])
 {
-    
     char file_name[FILE_SIZE];
-    memset( file_name,0, sizeof(file_name) );
+    char buffer[1024] = "0x06";
     
-    //strncpy(file_name,input+2,499-2);
-    strcpy(file_name,input);
-    // 输入文件名 并放到缓冲区buffer中等待发送 
-	  int file_fp;
-     
-	
-    //printf("Please Input File Name On Server:   "); 
-    //scanf("%s", file_name); 
-   
-    char buffer[BUFFER_SIZE]; 
-    memset( buffer,0, sizeof(buffer) );
-    strncpy(buffer, file_name, strlen(file_name)>sizeof(buffer)?sizeof(buffer):strlen(file_name)); 
-     
-    // 向服务器发送buffer中的数据 
-    if(write(sock_desc, buffer, sizeof(buffer)) < 0) 
-    { 
+    memset(file_name,0,sizeof(file_name));
+    strncpy(file_name,input+2,499-2);
+    strcat(buffer,input+2);
+    strcat(buffer,"\0");
+    if(write(sock_desc,buffer,sizeof(buffer)) < 0)
+    {
         perror("Send File Name Failed:"); 
-        exit(1); 
-    } 
-	
-	  if( strcmp(file_name,"null")==0 )
-	  {
-		    exit(1);
-		    close(sock_desc);
-	  }	
-	 // 打开文件，准备写入 
-    file_fp = open(file_name+2,O_CREAT|O_RDWR,0777); 
-    if( file_fp<0 ) 
-    { 
-        printf("File:\t%s Can Not Open To Write\n", file_name); 
-        exit(1); 
-    } 
-   
-     // 从服务器接收数据到buffer中 
-     // 每接收一段数据，便将其写入文件中，循环直到文件接收完并写完为止 
-    int length = 0; 
-	  memset( buffer,0, sizeof(buffer) );
-   
-    while((length = read(sock_desc, buffer, sizeof(buffer))) > 0) 
-    { 
-        if( write( file_fp, buffer, length ) < length) 
-        { 
-            printf("File:\t%s Write Failed\n", file_name); 
-            break; 
-        } 
-		    if(length < sizeof(buffer))
-		    {
-		        break;
-		    }
-        memset( buffer,0, sizeof(buffer) );
-    } 
-	 
-	// 接收成功后，关闭文件，关闭socket 
-    printf("Receive File:\t%s From Server IP Successful!\n", file_name); 
-    close(file_fp); 	
+        exit(1);
+    }
+
+    //char buffer[BUFFER_SIZE];
+    memset(buffer,0,sizeof(buffer));
+    unsigned char size[4]={0};
+    int x;
+    unsigned int length;
+    int counter = 0;
+    while((length = read(sock_desc, size, sizeof(size))) > 0) 
+    {
+      counter ++;
+      
+      x = *(int *)size;
+      printf("size is %d which is %d, counter : %d\n",length,x,counter);
+      printf("%x %x %x %x \n",size[3],size[2],size[1],size[0]);
+      if(x!=0){
+        break;
+      }
+      memset(size,0, sizeof(size) );
+    }
+    // memset(buffer,0,BUFFER_SIZE);
+    char *data;
+    data = (char *)malloc((x+1) * sizeof(char));
+    int RecvSize=0;
+    //char content [x]  
+    printf("size is %d---------------------------------------\n",x);
+    while(x>0) 
+      { 
+        RecvSize = recv(sock_desc,data+RecvSize,x,0);
+        if(RecvSize == -1){
+          perror("Recieve File Content Failed:"); 
+              exit(1);
+        }
+
+        x = x- RecvSize;
+      }
+    
+    printf("%s\n",data);
+    
+    FILE *fp = fopen(file_name, "ab");
+    if (fp != NULL)
+    {
+        fputs(data, fp);
+        fclose(fp);
+    }
+    free(data);
+    printf("File:%s update Successful!\n", file_name); 
 }
