@@ -8,47 +8,31 @@ xmlNodePtr findNodeByName(xmlNodePtr rootnode, const xmlChar * nodename,const ch
 int main(int argc, char **argv)
 
 {
-//查找条例
-	xmlDocPtr doc;           //定义解析文件指针
+    xmlDocPtr doc;           //定义解析文件指针
     xmlNodePtr curNode;      //定义结点指针
     xmlChar *szKey;          //临时字符串变量
-    
+    char *szDocName;
     
     doc = xmlReadFile("copy.xml","GB2312",XML_PARSE_RECOVER);
-    //解析文件
-    //检查解析文档是否成功，如果不成功，libxml将报错并停止解析。
-    //一个常见错误是不适当的编码，XML标准文档除了用UTF-8或UTF-16外还可用其它编码保存
+    
     if (NULL == doc) {
         fprintf(stderr,"Document not parsed successfully.");
-        return -1;
+        exit(1);
+        //return -1;
     }
     //获取根节点
     curNode = xmlDocGetRootElement(doc);
     if (NULL == curNode) {
         fprintf(stderr,"empty document");
         xmlFreeDoc(doc);
-        return -1;
+        exit(1);
     }
-    // xmlNodePtr temp;
-    // temp = findNodeByName(curNode,(const xmlChar *) "knownas","1.txt");
-    // if(temp != NULL){
-    //     szKey = xmlNodeGetContent(temp);
-    //     printf("%s\n",szKey);
-    // }
-    // else{
-    //     printf("errpr");
-    // }
-    
-    //确认根元素名字是否符合
-    // if (xmlStrcmp(curNode->name, BAD_CAST "root")) {
-    //     fprintf(stderr,"document of the wrong type, root node != root");
-    //     xmlFreeDoc(doc);
-    //     return -1;
-    // }
-    int flag;
+
     curNode = curNode->xmlChildrenNode;
     xmlNodePtr propNodePtr = curNode;
-    xmlNodePtr tepNode;      //定义结点指针
+    xmlNodePtr tepNode;
+    //int find_file = 0;
+    int flag = 0;
     while(curNode != NULL) {
         //取出节点中的内容
         if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
@@ -56,27 +40,26 @@ int main(int argc, char **argv)
             curNode = curNode->children;
             while(curNode !=NULL){
                 szKey = xmlNodeGetContent(curNode);
+                //printf()
                 if(strcmp(szKey,"1.txt") == 0){
-                    printf("md5: %s\n", xmlNodeGetContent(tepNode->xmlChildrenNode));
+                    flag = 1;
                 }
                 
                 curNode = curNode->next;
             }
             curNode = tepNode;
-            // tepNode = curNode -> xmlChildrenNode;
-            // szKey = xmlNodeGetContent(tepNode);
-            // printf("newNode1: %s\n", szKey);
-            //if(strcmp(szKey,"0000") == 0){
-            //	xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST "1.txt");
-            //}
             
-
             xmlFree(szKey);
         }
-        //查找带有属性attribute的节点
-        if (xmlHasProp(curNode,BAD_CAST "attribute")) {
-            propNodePtr = curNode;
+        if(flag == 1){
+            tepNode = curNode -> next;
+            xmlUnlinkNode(curNode);
+            xmlFreeNode(curNode);
+            curNode = tepNode;
+            flag = 0;
+            continue;
         }
+        
         curNode = curNode->next;
 
     }
@@ -87,6 +70,87 @@ int main(int argc, char **argv)
     }
     //释放文档内节点动态申请的内存
     xmlFreeDoc(doc);
+
+//================================================================================
+//查找条例
+	// xmlDocPtr doc;           //定义解析文件指针
+ //    xmlNodePtr curNode;      //定义结点指针
+ //    xmlChar *szKey;          //临时字符串变量
+    
+    
+ //    doc = xmlReadFile("copy.xml","GB2312",XML_PARSE_RECOVER);
+ //    //解析文件
+ //    //检查解析文档是否成功，如果不成功，libxml将报错并停止解析。
+ //    //一个常见错误是不适当的编码，XML标准文档除了用UTF-8或UTF-16外还可用其它编码保存
+ //    if (NULL == doc) {
+ //        fprintf(stderr,"Document not parsed successfully.");
+ //        return -1;
+ //    }
+ //    //获取根节点
+ //    curNode = xmlDocGetRootElement(doc);
+ //    if (NULL == curNode) {
+ //        fprintf(stderr,"empty document");
+ //        xmlFreeDoc(doc);
+ //        return -1;
+ //    }
+ //    // xmlNodePtr temp;
+ //    // temp = findNodeByName(curNode,(const xmlChar *) "knownas","1.txt");
+ //    // if(temp != NULL){
+ //    //     szKey = xmlNodeGetContent(temp);
+ //    //     printf("%s\n",szKey);
+ //    // }
+ //    // else{
+ //    //     printf("errpr");
+ //    // }
+    
+ //    //确认根元素名字是否符合
+ //    // if (xmlStrcmp(curNode->name, BAD_CAST "root")) {
+ //    //     fprintf(stderr,"document of the wrong type, root node != root");
+ //    //     xmlFreeDoc(doc);
+ //    //     return -1;
+ //    // }
+ //    int flag;
+ //    curNode = curNode->xmlChildrenNode;
+ //    xmlNodePtr propNodePtr = curNode;
+ //    xmlNodePtr tepNode;      //定义结点指针
+ //    while(curNode != NULL) {
+ //        //取出节点中的内容
+ //        if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
+ //            tepNode = curNode;
+ //            curNode = curNode->children;
+ //            while(curNode !=NULL){
+ //                szKey = xmlNodeGetContent(curNode);
+ //                if(strcmp(szKey,"1.txt") == 0){
+ //                    printf("md5: %s\n", xmlNodeGetContent(tepNode->xmlChildrenNode));
+ //                }
+                
+ //                curNode = curNode->next;
+ //            }
+ //            curNode = tepNode;
+ //            // tepNode = curNode -> xmlChildrenNode;
+ //            // szKey = xmlNodeGetContent(tepNode);
+ //            // printf("newNode1: %s\n", szKey);
+ //            //if(strcmp(szKey,"0000") == 0){
+ //            //	xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST "1.txt");
+ //            //}
+            
+
+ //            xmlFree(szKey);
+ //        }
+ //        //查找带有属性attribute的节点
+ //        if (xmlHasProp(curNode,BAD_CAST "attribute")) {
+ //            propNodePtr = curNode;
+ //        }
+ //        curNode = curNode->next;
+
+ //    }
+ //    int nRel = xmlSaveFile("copy.xml",doc);
+ //    if (nRel != -1)
+ //    {
+ //        printf("一个xml文档被创建，写入%d个字节\n", nRel);
+ //    }
+ //    //释放文档内节点动态申请的内存
+ //    xmlFreeDoc(doc);
 //=================================================================================================
 //添加条例
 	// xmlDocPtr doc;           //定义解析文件指针

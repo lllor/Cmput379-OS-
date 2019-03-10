@@ -13,7 +13,9 @@
 #define FILE_SIZE 500 
 #define BUFFER_SIZE 1024
 
-
+int deletefile(int sock_desc, char input[]);
+int listfile(int sock_desc);
+int quit(int sock_desc);
 int downloadfile(int sock_desc,char input[]);
 int updatefile(int sock_desc,char input[]);
 int main()
@@ -49,19 +51,29 @@ int main()
         }
       	switch(input[0])
       	{
-      	  	case 'l':break;
+      	  	case 'l':{
+                      listfile(sock_desc);
+                      break;
+                    }
       		  case 'u':{
                       updatefile(sock_desc,input);
                       break;
                     }	
       		  case 'd':	{
                       downloadfile(sock_desc,input);
+                      //printf("back\n");
       					      break;
                     }
-      		  case 'r':
-      					break;
-      	  	case 'q':
-      					break;
+      		  case 'r':{
+                      deletefile(sock_desc,input);
+                      //printf("back\n");
+                      break;
+                    }
+      			case 'q':{
+                      quit(sock_desc);
+                      break;
+                    }
+      					
       	}
 		//downloadfile(sock_desc);
 
@@ -70,6 +82,115 @@ int main()
     }
 	  return 0;
 	
+}
+int quit(int sock_desc){
+    char buffer[1024] = "0x08";
+    if(write(sock_desc,buffer,sizeof(buffer)) < 0)
+    {
+        perror("Send File Name Failed:"); 
+        exit(1);
+    }
+    unsigned int length;
+    int counter = 0;
+    char flag[5]={0};
+    while((length = read(sock_desc, flag, sizeof(flag))) > 0) 
+    {
+      printf("size is %d which %s\n",length,flag);
+      if(strcmp(flag,"0x05") == 0){
+        printf("OK\n"); 
+        exit(1);
+      }
+      memset(flag,0, sizeof(flag) );
+    }
+}
+int deletefile(int sock_desc,char input[])
+{
+    char file_name[FILE_SIZE];
+    char buffer[1024] = "0x04";
+    
+    memset(file_name,0,sizeof(file_name));
+    strncpy(file_name,input+2,499-2);
+    strcat(buffer,input+2);
+    strcat(buffer,"\0");
+    if(write(sock_desc,buffer,sizeof(buffer)) < 0)
+    {
+        perror("Send File Name Failed:"); 
+        exit(1);
+    }
+    unsigned int length;
+    int counter = 0;
+    char flag[5]={0};
+    while((length = read(sock_desc, flag, sizeof(flag))) > 0) 
+    {
+      printf("size is %d which %s\n",length,flag);
+      if(strcmp(flag,"0x05") == 0){
+        printf("OK\n"); 
+        break;
+      }
+      if(strcmp(flag,"0xFF") == 0){
+        printf("SERROR file not find in server repository\n");
+        return 1;
+      }
+      memset(flag,0, sizeof(flag) );
+    }
+    //printf("end");
+    return 1;
+
+}
+int listfile(int sock_desc){
+    char buffer[BUFFER_SIZE] = "0x00";
+    if(write(sock_desc,buffer,sizeof(buffer)) < 0)
+    {
+        perror("Send command Failed:"); 
+        exit(1);
+    }
+
+    memset(buffer,0,sizeof(buffer));
+    unsigned char size[2]={0};
+    int x =-1;
+    unsigned int length;
+    int counter = 0;
+    char flag[5]={0};
+    while((length = read(sock_desc, flag, sizeof(flag))) > 0) 
+    {
+      //printf("size is %d which %s\n",length,size);
+      if(strcmp(flag,"0x01") == 0){
+        //printf("File:%s list Successful!\n", file_name); 
+        break;
+      }
+      if(strcmp(flag,"0xFF") == 0){
+        //printf("File:%s list Failed!\n", file_name); 
+        return 1;
+      }
+      memset(flag,0, sizeof(flag) );
+    }
+
+    while((length = read(sock_desc, size, sizeof(size))) > 0) 
+    {
+      
+        x = size[0] | size[1] << 8;
+        //printf("size is %d which is %d, counter : %d\n",length,x,counter);
+        if(x!=-1){
+          break;
+        }
+        memset(size,0, sizeof(size) );
+    }
+    
+    char file_name[BUFFER_SIZE];
+    counter = 0;
+    while(x>0){
+        read(sock_desc,file_name,BUFFER_SIZE);
+        printf("OK+ %s\n",file_name);
+        counter += 1;
+        x -= 1;
+        memset(file_name,0,sizeof(file_name));
+    }
+    //printf("read end");
+    //for(int i = 0;i<x; i += 1){
+    //    printf("OK+ %s\n",file_name[i]);
+   // }
+    printf("OK\n");
+
 }
 int updatefile(int sock_desc,char input[])
 {
@@ -125,9 +246,6 @@ int updatefile(int sock_desc,char input[])
     printf("%s",data);
     int rest = num;
     while(rest > 0){
-        printf("%d\n",rest);
-        //strncpy(buffer,data,sizeof(buffer));
-
         SendSize = send(sock_desc,data + SendSize,rest,0);
         if(SendSize == -1){
             perror("Send File Content Failed:"); 
@@ -135,39 +253,22 @@ int updatefile(int sock_desc,char input[])
         }
         rest = rest-SendSize;
     }
-
     
+    char size[5]={0};
+    while((length = read(sock_desc, size, sizeof(size))) > 0) 
+    {
+      //printf("size is %d which %s\n",length,size);
+      if(strcmp(size,"0x03") == 0){
+        printf("File:%s update Successful!\n", file_name); 
+        break;
+      }
+      if(strcmp(size,"0xFF") == 0){
+        printf("File:%s update Failed!\n", file_name); 
+        break;
+      }
+      memset(size,0, sizeof(size) );
+    }
     
-
-    
-    
-
-    
-
-    
-    // int SendSize = 0; 
-    //memset( buffer,0, BUFFER_SIZE);
-    
-
-    // int read_len;
-    // int send_len;
-    // //while( (length = fread(buffer,0, sizeof(buffer),fp)) > 0  )
-    // while ((read_len = fread(buffer,sizeof(char),BUFFER_SIZE,inFile))>0)    
-    // { 
-    //     printf("buffer is:%s\n",buffer);
-    //     send_len = send(sock_desc, buffer, read_len,0);
-    //     if(send_len< 0) 
-    //     { 
-    //         printf("Send File:%s Failed.\n", file_name); 
-    //         break; 
-    //     } 
-    //     memset( buffer,0, BUFFER_SIZE );
-    // } 
-
-
-    // free(data);
-    // fclose(inFile); 
-    printf("File:%s update Successful!\n", file_name); 
     
     return 1;
 }
@@ -192,6 +293,22 @@ int downloadfile(int sock_desc,char input[])
     int x;
     unsigned int length;
     int counter = 0;
+    char flag[5] = {0};
+    
+    while((length = read(sock_desc, flag, sizeof(flag))) > 0) 
+    {
+      printf("size is %d which %s\n",length,flag);
+      if(strcmp(flag,"0x07") == 0){
+        printf("File:%s download Successful!\n", file_name); 
+        break;
+      }
+      if(strcmp(flag,"0xFF") == 0){
+        printf("File:%s download Failed!\n", file_name); 
+        return 1;
+      }
+      memset(flag,0, sizeof(flag) );
+    }
+    
     while((length = read(sock_desc, size, sizeof(size))) > 0) 
     {
       counter ++;

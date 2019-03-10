@@ -9,12 +9,15 @@
 unsigned char i;
 int main() {
 
+	int x = 40;
+	int num;
+	unsigned char res[2]; /* two bytes of hex = 4 characters, plus NULL terminator */
+	res[0] = x & 0xFF;
+	res[1] = (x >> 8) & 0xFF;
+	num = res[0] | res[1] << 8;
+	printf("%d\n",num);
+
 	
-	int num = 20000;
-	while(num > 0){
-		printf("%d\n",num);
-		num = num -1024;
-	}
   //fseek(inFile, 0L, SEEK_SET);//set the file pointer back to beginning
  // 	FILE *inFile = fopen ("1.txt", "r");
  // 	char *data;

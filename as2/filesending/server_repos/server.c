@@ -21,9 +21,14 @@ void *net_thread(void * fd);
 char *convertMD5(const char *str, int length);
 int updatexml(char filename[],const char *md5,const char *data);
 void download(void * fd,char input[]);
+void list(void * fd);
 void update(void * fd,char input[]);
+void delete(void * fd,char input[]);
 //void createxml(char filename[], char *content);
-
+void term(int signum)
+{
+   rename("repository.xml", ".dedup");
+}
 int main()
 {
 	int checker = access(".dedup",0);
@@ -43,7 +48,10 @@ int main()
 	}
 
 
-
+    struct sigaction action;
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = term;
+    sigaction(SIGTERM, &action, NULL);
 
 	int serverSocket, newSocket;
 	struct sockaddr_storage serverStorgae;
@@ -152,16 +160,12 @@ void *net_thread(void * fd)
            break; 
         } 
 		
-        // 然后从buffer(缓冲区)拷贝到file_name中 
-        //char file_name[FILE_SIZE]; 
+
         char temp_buffer[5];
-		//memset( file_name,0, sizeof(file_name) );
 		memset( temp_buffer,'\0', sizeof(temp_buffer) );	
-        //strncpy(temp_buffer, buffer, strlen(buffer)>FILE_SIZE?FILE_SIZE:strlen(buffer));
         strncpy(temp_buffer,buffer,4);
         printf("buffer is %s\n",buffer);
-        //printf("%s\n",temp_buffer);
-        //printf("%d\n",(strcmp(temp_buffer,"0x02")));
+        
         if(strcmp(temp_buffer,"0x02") == 0){
         	printf("ready update\n");
         	strncpy(temp_buffer,buffer+4,499-4);
@@ -175,6 +179,20 @@ void *net_thread(void * fd)
         	printf("%s\n",temp_buffer);
         	download(fd,temp_buffer);
         }
+        if(strcmp(temp_buffer,"0x00") == 0){
+        	printf("ready list\n");
+        	list(fd);
+        }
+        if(strcmp(temp_buffer,"0x04") == 0){
+            printf("ready delete\n");
+            strncpy(temp_buffer,buffer+4,499-4);
+            printf("%s\n",temp_buffer);
+            delete(fd,temp_buffer);
+        }
+        if(strcmp(temp_buffer,"0x08") == 0){
+            write(newSocket,"0x09",sizeof("0x09"));
+            break;
+        }
         memset( buffer,0, sizeof(buffer) );
         
      
@@ -182,6 +200,163 @@ void *net_thread(void * fd)
         
 	}
 	close(newSocket);
+}
+void delete(void * fd, char input[]){
+    int newSocket=*((int *)fd);
+    xmlDocPtr doc;           //定义解析文件指针
+    xmlNodePtr curNode;      //定义结点指针
+    xmlChar *szKey;          //临时字符串变量
+    char *szDocName;
+    
+    doc = xmlReadFile("repository.xml","GB2312",XML_PARSE_RECOVER);
+    
+    if (NULL == doc) {
+        fprintf(stderr,"Document not parsed successfully.");
+        exit(1);
+        //return -1;
+    }
+    //获取根节点
+    curNode = xmlDocGetRootElement(doc);
+    if (NULL == curNode) {
+        fprintf(stderr,"empty document");
+        xmlFreeDoc(doc);
+        exit(1);
+    }
+
+    curNode = curNode->xmlChildrenNode;
+    xmlNodePtr propNodePtr = curNode;
+    xmlNodePtr tepNode;
+    //int find_file = 0;
+    int flag = 0;
+    int counter = 0;
+    while(curNode != NULL) {
+        //取出节点中的内容
+        if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
+            tepNode = curNode;
+            curNode = curNode->children;
+            while(curNode !=NULL){
+                szKey = xmlNodeGetContent(curNode);
+                if(strcmp(szKey,input) == 0){
+                    remove(xmlNodeGetContent(tepNode->xmlChildrenNode));
+                    flag = 1;
+                }
+                
+                curNode = curNode->next;
+            }
+            curNode = tepNode;
+            
+            xmlFree(szKey);
+        }
+        if(flag == 1){
+            counter += 1;
+            tepNode = curNode -> next;
+            xmlUnlinkNode(curNode);
+            xmlFreeNode(curNode);
+            curNode = tepNode;
+            flag = 0;
+            continue;
+        }
+        
+        curNode = curNode->next;
+
+    }
+
+    if(counter == 0){
+        write(newSocket,"0xFF",sizeof("0xFF"));
+    }
+    else{
+        write(newSocket,"0x05",sizeof("0x05"));
+    }
+
+    int nRel = xmlSaveFile("repository.xml",doc);
+    if (nRel != -1)
+    {
+        printf("一个xml文档被创建，写入%d个字节\n", nRel);
+    }
+    //释放文档内节点动态申请的内存
+    xmlFreeDoc(doc);
+
+}
+void list(void *fd){
+	int newSocket=*((int *)fd);
+	xmlDocPtr doc;           //定义解析文件指针
+    xmlNodePtr curNode;      //定义结点指针
+    xmlChar *szKey;          //临时字符串变量
+    char *szDocName;
+    int flag = 0;
+    
+    doc = xmlReadFile("repository.xml","GB2312",XML_PARSE_RECOVER);
+    
+    if (NULL == doc) {
+        fprintf(stderr,"Document not parsed successfully.");
+        exit(1);
+        //return -1;
+    }
+    //获取根节点
+    curNode = xmlDocGetRootElement(doc);
+    if (NULL == curNode) {
+        fprintf(stderr,"empty document");
+        xmlFreeDoc(doc);
+        exit(1);
+    }
+
+    curNode = curNode->xmlChildrenNode;
+    xmlNodePtr propNodePtr = curNode;
+    xmlNodePtr tepNode;
+    int num =0;
+    int counter = 0;
+    while(curNode != NULL) {
+        //取出节点中的内容
+        if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
+            tepNode = curNode;
+            curNode = curNode->children->next;
+            while(curNode !=NULL){
+                num += 1;
+                curNode = curNode->next;
+            }
+            curNode = tepNode;
+        }
+    curNode = curNode->next;
+	}
+	char name[num][BUFFER_SIZE];
+	curNode = propNodePtr;
+	while(curNode != NULL) {
+        if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
+            tepNode = curNode;
+            curNode = curNode->children->next;
+            while(curNode !=NULL){
+                szKey = xmlNodeGetContent(curNode);
+                strcpy(name[counter],szKey);
+                counter +=1;
+                curNode = curNode->next;
+            }
+            curNode = tepNode;
+            xmlFree(szKey);
+        }
+    	curNode = curNode->next;
+	}
+    
+    unsigned int x = num;
+    unsigned char a[2];
+    a[1] = (x>>8) & 0xFF;
+    a[0] = x & 0xFF;
+    if(write(newSocket,"0x01",sizeof("0x01")) < 0){
+        write(newSocket,"0xFF",sizeof("0xFF"));
+    }
+    if(write(newSocket,a,2) < 0)
+    {
+        perror("Send list size Failed:"); 
+        exit(1);
+    }
+    counter = 0;
+    while(num>0){
+        //printf("%s\n",name[counter]);
+        write(newSocket,name[counter],sizeof(name[counter]));
+        counter += 1;
+        num -= 1;
+    }
+    //printf("end\n");
+    return;
 }
 void update(void * fd,char input[]){
 	int newSocket=*((int *)fd);
@@ -213,6 +388,7 @@ void update(void * fd,char input[]){
     	RecvSize = recv(newSocket,data+RecvSize,x,0);
     	if(RecvSize == -1){
     		perror("Recieve File Content Failed:"); 
+            write(newSocket,"0xFF",sizeof("0xFF"));
             exit(1);
     	}
 
@@ -226,6 +402,9 @@ void update(void * fd,char input[]){
 
 	free(md5);
 	free(data);
+    char flag[5] = "0x03";
+    write(newSocket,flag,sizeof(flag));
+
 	
  //    printf("File:%s update Successful!\n", file_name);
     return;
@@ -240,7 +419,6 @@ void download(void * fd,char input[]){
     xmlNodePtr curNode;      //定义结点指针
     xmlChar *szKey;          //临时字符串变量
     char *szDocName;
-    int flag = 0;
     
     doc = xmlReadFile("repository.xml","GB2312",XML_PARSE_RECOVER);
     
@@ -260,6 +438,7 @@ void download(void * fd,char input[]){
     curNode = curNode->xmlChildrenNode;
     xmlNodePtr propNodePtr = curNode;
     xmlNodePtr tepNode;
+    //int find_file = 0;
     char md5[33];
     while(curNode != NULL) {
         //取出节点中的内容
@@ -270,8 +449,7 @@ void download(void * fd,char input[]){
                 szKey = xmlNodeGetContent(curNode);
                 //printf()
                 if(strcmp(szKey,input) == 0){
-                   // printf("md5: %s\n", xmlNodeGetContent(tepNode->xmlChildrenNode));
-                	strcpy(md5,xmlNodeGetContent(tepNode->xmlChildrenNode));
+                    strcpy(md5,xmlNodeGetContent(tepNode->xmlChildrenNode));
                 }
                 
                 curNode = curNode->next;
@@ -284,14 +462,16 @@ void download(void * fd,char input[]){
         curNode = curNode->next;
 
     }
-    printf("%s\n",md5);
 	
 	FILE *inFile = fopen (md5, "r");
   	if(inFile == NULL) 
     { 
         printf("File:%s Not Found\n", md5); 
+        write(newSocket,"0xFF",sizeof("0xFF"));
         return;
     } 
+    write(newSocket,"0x07",sizeof("0x07"));
+    sleep(5);
     fseek(inFile, 0L, SEEK_END);
     int sz = ftell(inFile);//size to send
     fseek(inFile, 0L, SEEK_SET);//set the file pointer back to beginning
@@ -312,7 +492,7 @@ void download(void * fd,char input[]){
     memset(buffer,0,sizeof(buffer));
     strncpy(buffer,a,4);
     printf("%s\n",buffer);
-    int SendSize = 3;
+    int SendSize = 0;
     if(write(newSocket,buffer,4) < 0)
     {
         perror("Send File Name Failed:"); 
@@ -326,48 +506,13 @@ void download(void * fd,char input[]){
     printf("%s",data);
     
     while (num>0){
-        strncpy(buffer,data,sizeof(buffer));
-
-        SendSize = send(newSocket,buffer,strlen(buffer),0);
+        SendSize = send(newSocket,data + SendSize,num,0);
         if(SendSize == -1){
             perror("Send File Content Failed:"); 
             exit(1);
         }
         num = num-SendSize;
     }
-
-	// printf("%s\n", file_name); 
-		
-	// if( strcmp(file_name,"null")==0 )
- //    {
-	//    return;
-	//    close(newSocket);
- //    }
-	
-	//   // 打开文件并读取文件数据 
- //     file2_fp = open(file_name,O_RDONLY,0777); 
- //     if(file2_fp<0) 
- //     { 
- //        printf("File:%s Not Found\n", file_name); 
- //     } 
- //     else 
- //     { 
- //        int length = 0; 
-	// 	memset( buffer,0, sizeof(buffer) );
- //        // 每读取一段数据，便将其发送给客户端，循环直到文件读完为止 
- //        while( (length = read(file2_fp, buffer, sizeof(buffer))) > 0  )    
- //        {   
- //            if( write(newSocket, buffer, length) < 0) 
- //            { 
- //                printf("Send File:%s Failed.\n", file_name); 
- //                break; 
- //            } 
- //            memset( buffer,0, sizeof(buffer) );
- //        } 
- //          // 关闭文件 
- //          close(file2_fp); 
- //          printf("File:%s Transfer Successful!\n", file_name); 
- //     }
     free(data);
     return;   
 }
