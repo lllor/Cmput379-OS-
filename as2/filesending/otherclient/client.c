@@ -95,7 +95,8 @@ int quit(int sock_desc){
     char flag[5]={0};
     while((length = read(sock_desc, flag, sizeof(flag))) > 0) 
     {
-      if(strcmp(flag,"0x09") == 0){
+      printf("size is %d which %s\n",length,flag);
+      if(strcmp(flag,"0x05") == 0){
         printf("OK\n"); 
         exit(1);
       }
