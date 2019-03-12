@@ -75,41 +75,41 @@ int main()
 {
 	
 	
-	pid_t process_id = 0;
-	pid_t sid = 0;
-	// Create child process
-	process_id = fork();
-	// Indication of fork() failure
-	if (process_id < 0)
-	{
-		printf("fork failed!\n");
-		// Return failure in exit status
-		exit(1);
-	}
-	// PARENT PROCESS. Need to kill it.
-	if (process_id > 0)
-	{
-		printf("process_id of child process %d \n", process_id);
-		// return success in exit status
-		exit(0);
-	}
-	//unmask the file mode
-	umask(0);
-	//set new session
-	sid = setsid();
-	if(sid < 0)
-	{
-		// Return failure
-		exit(1);
-	}
-	// Change the current working directory to root.
-	chdir("./");
-	// Close stdin. stdout and stderr
-	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
+	// pid_t process_id = 0;
+	// pid_t sid = 0;
+	// // Create child process
+	// process_id = fork();
+	// // Indication of fork() failure
+	// if (process_id < 0)
+	// {
+	// 	printf("fork failed!\n");
+	// 	// Return failure in exit status
+	// 	exit(1);
+	// }
+	// // PARENT PROCESS. Need to kill it.
+	// if (process_id > 0)
+	// {
+	// 	printf("process_id of child process %d \n", process_id);
+	// 	// return success in exit status
+	// 	exit(0);
+	// }
+	// //unmask the file mode
+	// umask(0);
+	// //set new session
+	// sid = setsid();
+	// if(sid < 0)
+	// {
+	// 	// Return failure
+	// 	exit(1);
+	// }
+	// // Change the current working directory to root.
+	// chdir("./");
+	// // Close stdin. stdout and stderr
+	// close(STDIN_FILENO);
+	// close(STDOUT_FILENO);
+	// close(STDERR_FILENO);
 
-	sleep(1);
+	// sleep(1);
 
     struct sigaction action;
     memset(&action, 0, sizeof(action));
@@ -133,6 +133,7 @@ int main()
 		perror("socket");
 		exit(1);
 	}
+	
 	struct sockaddr_in server_addr;   //struct sockaddr_in为结构体类型 ，server_addr为定义的结构体   
 	server_addr.sin_family=AF_INET;   //Internet地址族=AF_INET(IPv4协议) 
 	server_addr.sin_port=htons(portnum);  //将主机字节序转化为网络字节序 ,portnum是端口号
@@ -159,54 +160,47 @@ int main()
 	
 	pthread_t tid[50];
 	int i = 0;
+	int arrayInteger[50] = {0};
 	pthread_mutex_init(&lock,NULL);
-	for (i=0;i<50;i++){
-		printf("Creating thread %d\n",i);
+
+	while(1)
+	{
+
+		//pthread_mutex_init(&lock,NULL);
+
 		addr_size = sizeof(serverStorgae);
-		newSocket = accept(serverSocket,(struct sockaddr *) &serverStorgae,&addr_size);
-		pthread_create(&tid[i], NULL, net_thread, (void *) &newSocket);
-	}
-
-	for (i = 0; i < 50; i++){
-        pthread_join(tid[i],NULL);
-        printf("Joined thread %d\n",i);
-    }
-    pthread_mutex_destroy(&lock);
-	// while(1)
-	// {
-
-	// 	pthread_mutex_init(&lock,NULL);
-
-	// 	addr_size = sizeof(serverStorgae);
-	// 	newSocket = accept(serverSocket,(struct sockaddr *) &serverStorgae,&addr_size);
+		//newSocket = accept(serverSocket,(struct sockaddr *) &serverStorgae,&addr_size);
+		arrayInteger[i] = accept(serverSocket,(struct sockaddr *) &serverStorgae,&addr_size);
 		
-	// 	if(-1==newSocket)
-	// 	{
-	// 		perror("accept");
-	// 		exit(1);       //进行下一次循环
-	// 	}
+		if(-1==newSocket)
+		{
+			perror("accept");
+			exit(1);       //进行下一次循环
+		}
 		
-	// 	printf("new_fd=%d\n",newSocket);
+		printf("new_fd=%d\n",newSocket);
 		
 			
-	// 	//int pthread_id;
-	// 	//int ret = pthread_create((pthread_t *)&pthread_id,NULL,net_thread,(void *)&new_fd);
-	// 	int ret = pthread_create(&tid[i],NULL,net_thread,&newSocket);
-	// 	if(ret != 0){
-	// 		printf("Failed to create thread\n");
-	// 	}
-	// 	i++;
-	// 	if(i>=50){
-	// 		i=0;
-	// 		while(i<50){
-	// 			pthread_join(tid[i],NULL);
-	// 			i+=1;
-	// 		}
-	// 		i=0;
-	// 	}
-	// 	//pthread_mutex_destroy(&lock);
+		//int pthread_id;
+		//int ret = pthread_create((pthread_t *)&pthread_id,NULL,net_thread,(void *)&new_fd);
+		//int ret = pthread_create(&tid[i],NULL,net_thread,&newSocket);
+		int ret = pthread_create(&tid[i],NULL,net_thread,&arrayInteger[i]);
+		if(ret != 0){
+			printf("Failed to create thread\n");
+		}
+		i++;
+		if(i>=50){
+			i=0;
+			while(i<50){
+				pthread_join(tid[i],NULL);
+				i+=1;
+			}
+			i=0;
+		}
+		//pthread_mutex_destroy(&lock);
 		
-	// }
+	}
+	pthread_mutex_destroy(&lock);
 	close(serverSocket);
 	return 0;
  
@@ -218,6 +212,7 @@ void *net_thread(void * fd)
 {
 	//pthread_mutex_lock(&lock);
 	pthread_detach(pthread_self()); //线程分离
+	
 	int newSocket=*((int *)fd);
 	
 	printf("%d\n",newSocket);
