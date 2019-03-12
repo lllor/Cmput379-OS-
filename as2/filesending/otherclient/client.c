@@ -61,6 +61,7 @@ int main()
                     }	
       		  case 'd':	{
                       downloadfile(sock_desc,input);
+                      //printf("back\n");
       					      break;
                     }
       		  case 'r':{

@@ -9,17 +9,15 @@
 unsigned char i;
 int main() {
 
-	unsigned int num = 2130706432;
-	unsigned int x;
-	unsigned char a[4];
+	int x = 40;
+	int num;
+	unsigned char res[2]; /* two bytes of hex = 4 characters, plus NULL terminator */
+	res[0] = x & 0xFF;
+	res[1] = (x >> 8) & 0xFF;
+	num = res[0] | res[1] << 8;
+	printf("%d\n",num);
 
-	a[3] = (num>>24) & 0xFF;
-	a[2] = (num>>16) & 0xFF;
-	a[1] = (num>>8) & 0xFF;
-	a[0] = num & 0xFF;
-	printf("%x %x %x %x \n",a[3],a[2],a[1],a[0]);
-	x = *(int *)a;
-	printf("%d\n", x);
+	
   //fseek(inFile, 0L, SEEK_SET);//set the file pointer back to beginning
  // 	FILE *inFile = fopen ("1.txt", "r");
  // 	char *data;
