@@ -61,7 +61,6 @@ int main()
                     }	
       		  case 'd':	{
                       downloadfile(sock_desc,input);
-                      //printf("back\n");
       					      break;
                     }
       		  case 'r':{
@@ -260,8 +259,9 @@ int updatefile(int sock_desc,char input[])
     {
       //printf("size is %d which %s\n",length,size);
       if(strcmp(size,"0x03") == 0){
-        printf("File:%s update Successful!\n", file_name); 
-        break;
+        //printf("File:%s update Successful!\n", file_name); 
+        printf("OK\n");
+	break;
       }
       if(strcmp(size,"0xFF") == 0){
         printf("File:%s update Failed!\n", file_name); 
@@ -300,7 +300,7 @@ int downloadfile(int sock_desc,char input[])
     {
       printf("size is %d which %s\n",length,flag);
       if(strcmp(flag,"0x07") == 0){
-        printf("File:%s download Successful!\n", file_name); 
+        //printf("File:%s download Successful!\n", file_name); 
         break;
       }
       if(strcmp(flag,"0xFF") == 0){
@@ -327,7 +327,7 @@ int downloadfile(int sock_desc,char input[])
     data = (char *)malloc((x+1) * sizeof(char));
     int RecvSize=0;
     //char content [x]  
-    printf("size is %d---------------------------------------\n",x);
+    //printf("size is %d---------------------------------------\n",x);
     while(x>0) 
       { 
         RecvSize = recv(sock_desc,data+RecvSize,x,0);
@@ -339,7 +339,7 @@ int downloadfile(int sock_desc,char input[])
         x = x- RecvSize;
       }
     
-    printf("%s\n",data);
+    //printf("%s\n",data);
     
     FILE *fp = fopen(file_name, "ab");
     if (fp != NULL)
@@ -348,5 +348,6 @@ int downloadfile(int sock_desc,char input[])
         fclose(fp);
     }
     free(data);
-    printf("File:%s update Successful!\n", file_name); 
+    printf("OK\n");
+    //printf("File:%s update Successful!\n", file_name); 
 }

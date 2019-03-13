@@ -75,41 +75,41 @@ int main()
 {
 	
 	
-	// pid_t process_id = 0;
-	// pid_t sid = 0;
-	// // Create child process
-	// process_id = fork();
-	// // Indication of fork() failure
-	// if (process_id < 0)
-	// {
-	// 	printf("fork failed!\n");
-	// 	// Return failure in exit status
-	// 	exit(1);
-	// }
-	// // PARENT PROCESS. Need to kill it.
-	// if (process_id > 0)
-	// {
-	// 	printf("process_id of child process %d \n", process_id);
-	// 	// return success in exit status
-	// 	exit(0);
-	// }
-	// //unmask the file mode
-	// umask(0);
-	// //set new session
-	// sid = setsid();
-	// if(sid < 0)
-	// {
-	// 	// Return failure
-	// 	exit(1);
-	// }
-	// // Change the current working directory to root.
-	// chdir("./");
-	// // Close stdin. stdout and stderr
-	// close(STDIN_FILENO);
-	// close(STDOUT_FILENO);
-	// close(STDERR_FILENO);
+	pid_t process_id = 0;
+	pid_t sid = 0;
+	// Create child process
+	process_id = fork();
+	// Indication of fork() failure
+	if (process_id < 0)
+	{
+		printf("fork failed!\n");
+		// Return failure in exit status
+		exit(1);
+	}
+	// PARENT PROCESS. Need to kill it.
+	if (process_id > 0)
+	{
+		printf("process_id of child process %d \n", process_id);
+		// return success in exit status
+		exit(0);
+	}
+	//unmask the file mode
+	umask(0);
+	//set new session
+	sid = setsid();
+	if(sid < 0)
+	{
+		// Return failure
+		exit(1);
+	}
+	// Change the current working directory to root.
+	chdir("./");
+	// Close stdin. stdout and stderr
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
 
-	// sleep(1);
+	sleep(1);
 
     struct sigaction action;
     memset(&action, 0, sizeof(action));
@@ -180,10 +180,7 @@ int main()
 		
 		printf("new_fd=%d\n",newSocket);
 		
-			
-		//int pthread_id;
-		//int ret = pthread_create((pthread_t *)&pthread_id,NULL,net_thread,(void *)&new_fd);
-		//int ret = pthread_create(&tid[i],NULL,net_thread,&newSocket);
+
 		int ret = pthread_create(&tid[i],NULL,net_thread,&arrayInteger[i]);
 		if(ret != 0){
 			printf("Failed to create thread\n");
@@ -408,12 +405,15 @@ void update(void * fd,char input[]){
 	}
 	while((new)->first!=NULL)					//store all node form temp squeue into orignal squeue
 	{
-		//fprintf(logfile,"filename: %s\ncontent: %s\nmd5: %s\n\n",(new->first)->filename,(new->first)->content,(new->first)->md5);
 		addBack(map,(new->first)->filename,(new->first)->content,(new->first)->md5);
 		leaveFront(new);
 	}
 	free(new);
 
+	if(flag == 1){
+    	write(newSocket,"0xFF",sizeof("0xFF"));
+    	return;
+    }
 	unsigned char size[4];
 	int x;
 	unsigned int length;
@@ -455,24 +455,22 @@ void update(void * fd,char input[]){
 	filename = malloc(strlen(input)+1);
 	strcpy(filename,input);
 	addBack(map,input,data,md5);
-	printf("%s\n",md5);
+	//printf("%s\n",md5);
 
 	
 
 	
     //char flag[5] = "0x03";
-    if(flag == 1){
-    	write(newSocket,"0xFF",sizeof("0xFF"));
-    }
-    else{
-    	FILE *fp = fopen(md5, "ab");
-		if (fp != NULL)
-		{
-    		fputs(data, fp);
-    		fclose(fp);
-		}
-    	write(newSocket,"0x03",sizeof("0x03"));
-    }
+    
+    
+	FILE *fp = fopen(md5, "ab");
+	if (fp != NULL)
+	{
+		fputs(data, fp);
+		fclose(fp);
+	}
+	write(newSocket,"0x03",sizeof("0x03"));
+    
     free(md5);
 	free(data);
 	free(filename);
