@@ -17,7 +17,7 @@
 #include <libxml/tree.h>
 #include <signal.h>
 #include <sys/stat.h>
-#define portnum 9999
+
 #define FILE_SIZE 500 
 #define BUFFER_SIZE 1024
 
@@ -72,9 +72,14 @@ void term(int signum)
    	exit(1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-	
+	if(argc < 3 || argc > 3){
+        printf("wrong argument number");
+        exit(1);
+    }
+    char *directory = argv[1];
+    int portnum = atoi(argv[2]);
 	
 	pid_t process_id = 0;
 	pid_t sid = 0;
@@ -104,7 +109,7 @@ int main()
 		exit(1);
 	}
 	// Change the current working directory to root.
-	chdir("./");
+	chdir(directory);
 	// Close stdin. stdout and stderr
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
@@ -241,8 +246,6 @@ void *net_thread(void * fd)
                 pthread_mutex_lock(&lock);
         
         if(strcmp(temp_buffer,"0x02") == 0){
-        	
-        	
         	printf("ready update\n");
         	strncpy(temp_buffer,buffer+4,499-4);
         	printf("%s\n",temp_buffer);

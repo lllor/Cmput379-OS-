@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -9,7 +10,6 @@
 #include <fcntl.h>
 #include <netinet/in.h>
  
-#define portnum 9999
 #define FILE_SIZE 500 
 #define BUFFER_SIZE 1024
 
@@ -18,8 +18,16 @@ int listfile(int sock_desc);
 int quit(int sock_desc);
 int downloadfile(int sock_desc,char input[]);
 int updatefile(int sock_desc,char input[]);
-int main()
+
+int main(int argc, char *argv[])
 {
+    if(argc < 3 || argc > 3){
+        printf("wrong argument number");
+        exit(1);
+    }
+    char *ServerAddress = argv[1];
+    int portnum = atoi(argv[2]);
+    //printf("%s %d\n",ServerAddress,portnum);
     char name[30]={0};
 	
 	
@@ -33,7 +41,7 @@ int main()
 	  struct sockaddr_in server_addr;
 	  server_addr.sin_family=AF_INET;
 	  server_addr.sin_port=htons(portnum);
-	  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");//=//*((struct in_addr *)h->h_addr_list[0]);
+	  server_addr.sin_addr.s_addr = inet_addr(ServerAddress);//=//*((struct in_addr *)h->h_addr_list[0]);
 	
 	  if(connect(sock_desc,(struct sockaddr *)&server_addr,sizeof(server_addr)) <0)
 	  {
