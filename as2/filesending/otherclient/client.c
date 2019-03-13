@@ -95,8 +95,7 @@ int quit(int sock_desc){
     char flag[5]={0};
     while((length = read(sock_desc, flag, sizeof(flag))) > 0) 
     {
-      printf("size is %d which %s\n",length,flag);
-      if(strcmp(flag,"0x05") == 0){
+      if(strcmp(flag,"0x09") == 0){
         printf("OK\n"); 
         exit(1);
       }
@@ -238,6 +237,7 @@ int updatefile(int sock_desc,char input[])
         perror("Send File Name Failed:"); 
         exit(1);
     }
+    
     int length = sz;
     char *data;
     data = (char *)malloc(length*sizeof(char));
@@ -245,6 +245,7 @@ int updatefile(int sock_desc,char input[])
     fread(data,1,length,inFile);
     printf("%s",data);
     int rest = num;
+    
     while(rest > 0){
         SendSize = send(sock_desc,data + SendSize,rest,0);
         if(SendSize == -1){

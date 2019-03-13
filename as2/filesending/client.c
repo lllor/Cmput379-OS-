@@ -61,7 +61,6 @@ int main()
                     }	
       		  case 'd':	{
                       downloadfile(sock_desc,input);
-                      //printf("back\n");
       					      break;
                     }
       		  case 'r':{
@@ -237,6 +236,7 @@ int updatefile(int sock_desc,char input[])
         perror("Send File Name Failed:"); 
         exit(1);
     }
+    
     int length = sz;
     char *data;
     data = (char *)malloc(length*sizeof(char));
@@ -244,6 +244,7 @@ int updatefile(int sock_desc,char input[])
     fread(data,1,length,inFile);
     printf("%s",data);
     int rest = num;
+    
     while(rest > 0){
         SendSize = send(sock_desc,data + SendSize,rest,0);
         if(SendSize == -1){

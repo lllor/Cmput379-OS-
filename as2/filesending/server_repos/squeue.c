@@ -130,7 +130,9 @@ void print (const Squeue *squeue, char direction, char iferror)
 		while(pp!=NULL)						//til the end
 		{
 
-			printf("%s",pp->filename);
+			printf("%s\n",pp->filename);
+			printf("%s\n",pp->content);
+			printf("%s\n\n",pp->md5 );
 			pp=pp->next;
 		}
 		//printf("\n");
