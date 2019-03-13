@@ -17,7 +17,7 @@
 #include <libxml/tree.h>
 #include <signal.h>
 #include <sys/stat.h>
-#define portnum 9999
+
 #define FILE_SIZE 500 
 #define BUFFER_SIZE 1024
 
@@ -71,8 +71,15 @@ void term(int signum)
    	close(serverSocket);
    	exit(1);
 }
-int main()
+
+int main(int argc, char *argv[])
 {
+    if(argc < 3 || argc > 3){
+        printf("wrong argument number");
+        exit(1);
+    }
+    char *directory = argv[1];
+    int portnum = atoi(argv[2]);
 	
 	
 	pid_t process_id = 0;
@@ -103,7 +110,7 @@ int main()
 		exit(1);
 	}
 	// Change the current working directory to root.
-	chdir("./");
+	chdir(directory);
 	// Close stdin. stdout and stderr
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
