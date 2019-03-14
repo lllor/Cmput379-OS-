@@ -40,9 +40,8 @@ void delete(void * fd,char input[]);
 
 void term(int signum)
 {
-	remove(".dedup");
    //rename("repository.xml", ".dedup");
-	xmlDocPtr doc;           //定义解析文件指针
+   xmlDocPtr doc;           //定义解析文件指针
 	xmlNodePtr curNode;      //定义结点指针
 	xmlChar *szKey;          //临时字符串变量
 	char *szDocName;
@@ -54,9 +53,9 @@ void term(int signum)
 	xmlDocSetRootElement(doc,root_node);        //设置根节点
 
 	int flag = 0;
-	xmlNodePtr tepNode; 	
+   xmlNodePtr tepNode; 	
 	   
-	while((map)->first!=NULL)					//free the memort til the squeue is empty
+   while((map)->first!=NULL)					//free the memort til the squeue is empty
 	{
 		printf("add new node\n");
 		curNode = xmlDocGetRootElement(doc);
@@ -64,19 +63,19 @@ void term(int signum)
 				
 		while(curNode != NULL) {
 
-			if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
+        if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
             
-				szKey = xmlNodeGetContent(curNode->xmlChildrenNode);
-				if(strcmp(szKey,(map->first)->md5) == 0){
-	    				xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST (map->first)->filename);
+            szKey = xmlNodeGetContent(tepNode->xmlChildrenNode);
+            if(strcmp(szKey,(map->first)->md5) == 0){
+            	xmlNewTextChild(curNode, NULL, BAD_CAST "knownas", BAD_CAST (map->first)->filename);
 					flag = 1;            
-				}
+            }
             
 
-				xmlFree(szKey);
-			}
+            xmlFree(szKey);
+        }
         
-			curNode = curNode->next;
+        curNode = curNode->next;
 
 		}
 		
@@ -93,9 +92,9 @@ void term(int signum)
 
 
 		leaveFront(map);
+		//counter += 1;
 	}
 	int nRel = xmlSaveFile("repository.xml",doc);
-	rename("repository.xml",".dedup");
 	xmlFreeDoc(doc);
    	close(serverSocket);
    	exit(1);
@@ -103,23 +102,18 @@ void term(int signum)
 
 int main(int argc, char *argv[])
 {
-	printf("In server\n");
-	if(argc < 3 || argc > 3){
-	    printf("wrong argument number");
-	    exit(1);
-	}
-	char *directory = argv[1];
-	int portnum = atoi(argv[2]);
+    if(argc < 3 || argc > 3){
+        printf("wrong argument number");
+        exit(1);
+    }
+    char *directory = argv[1];
+    int portnum = atoi(argv[2]);
 	
 	struct stat st = {0};
-	int ret = stat(argv[1], &st);
-	printf("%d\n",ret);
-	if (ret == -1) {
-		mkdir(argv[1], 0700);
+
+	if (stat(argv[1], &st) == -1) {
+    	mkdir(argv[1], 0700);
 	}
-	
-	
-	
 	pid_t process_id = 0;
 	pid_t sid = 0;
 	// Create child process
@@ -150,37 +144,29 @@ int main(int argc, char *argv[])
 	// Change the current working directory to root.
 	chdir(directory);
 	// Close stdin. stdout and stderr
-	//close(STDIN_FILENO);
+	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	close(STDERR_FILENO);
-	
+
 	sleep(1);
-	
-	struct sigaction action;
-	memset(&action, 0, sizeof(action));
-	action.sa_handler = term;
-	sigaction(SIGTERM, &action, NULL);
-     
-	//rename("./s_folder/.dedup","./s_folder/repository.xml");
-	initSqueue(&map);
+
+   struct sigaction action;
+   memset(&action, 0, sizeof(action));
+   action.sa_handler = term;
+   sigaction(SIGTERM, &action, NULL);
+
+
+   initSqueue(&map);
 	int checker = access(".dedup",0);
-	
-	printf("%d\n",checker);
 	if (checker == 0){
-		//printf("find file");
 		readxml();	
 	}
-	sleep(1);
-	printf("not find");
-	print(map,'f','r');
-	
-	logfile = fopen("x.log","a+");
-	
+	//print(map,'f','r');
+	//logfile = fopen("x.log","a+");
 	int newSocket;
 	struct sockaddr_storage serverStorgae;
 	socklen_t addr_size;
 	serverSocket=socket(AF_INET,SOCK_STREAM,0);
-	
 	if(-1==serverSocket)
 	{
 		perror("socket");
@@ -243,7 +229,6 @@ int main(int argc, char *argv[])
 			i=0;
 			while(i<50){
 				pthread_join(tid[i],NULL);
-				arrayInteger[i]=0;
 				i+=1;
 			}
 			i=0;
@@ -271,87 +256,89 @@ void *net_thread(void * fd)
 	char buffer[FILE_SIZE];
 	while(1)
 	{
+		// recv函数接收数据到缓冲区buffer中 
         
-		memset( buffer,'\0', sizeof(buffer) );		
-		if(read(newSocket, buffer, sizeof(buffer)) < 0) 
-		{ 
-			perror("Server Recieve Data Failed:"); 
-			break; 
-		} 
+        memset( buffer,0, sizeof(buffer) );		
+        if(read(newSocket, buffer, sizeof(buffer)) < 0) 
+        { 
+           perror("Server Recieve Data Failed:"); 
+           break; 
+        } 
 		
 
-		char temp_buffer[5];
+        char temp_buffer[5];
 		memset( temp_buffer,'\0', sizeof(temp_buffer) );	
-		strncpy(temp_buffer,buffer,4);
+        strncpy(temp_buffer,buffer,4);
         
         //fprintf(logfile,"buffer is %s\n",buffer);
         
-		if(strcmp(temp_buffer,"0x02") == 0){
-			if (G_MUTEX)
+        if(strcmp(temp_buffer,"0x02") == 0){
+        	if (G_MUTEX)
 				pthread_mutex_lock(&lock);
         	
-			printf("ready update\n");
-			strncpy(temp_buffer,buffer+4,499-4);
-			printf("%s\n",temp_buffer);
-			update(fd,temp_buffer);
+        	printf("ready update\n");
+        	strncpy(temp_buffer,buffer+4,499-4);
+        	printf("%s\n",temp_buffer);
+        	update(fd,temp_buffer);
         	
-			if (G_MUTEX)
-    				pthread_mutex_unlock(&lock);
-			memset( buffer,'\0', sizeof(buffer) );
-			continue;
-		}
-		if(strcmp(temp_buffer,"0x06") == 0){
-			if (G_MUTEX)
+        	if (G_MUTEX)
+    			pthread_mutex_unlock(&lock);
+        	memset( buffer,0, sizeof(buffer) );
+        	continue;
+        }
+        if(strcmp(temp_buffer,"0x06") == 0){
+        	if (G_MUTEX)
 				pthread_mutex_lock(&lock);
         	
-			printf("ready download\n");
-			strncpy(temp_buffer,buffer+4,499-4);
-			printf("%s\n",temp_buffer);
-			download(fd,temp_buffer);
+        	printf("ready download\n");
+        	strncpy(temp_buffer,buffer+4,499-4);
+        	printf("%s\n",temp_buffer);
+        	download(fd,temp_buffer);
         	
-			if (G_MUTEX)
-    				pthread_mutex_unlock(&lock);
-    			memset( buffer,'\0', sizeof(buffer) );
-    			continue;
-		}
-		if(strcmp(temp_buffer,"0x00") == 0){
-			if (G_MUTEX)
+        	if (G_MUTEX)
+    			pthread_mutex_unlock(&lock);
+    		memset( buffer,0, sizeof(buffer) );
+    		continue;
+        }
+        if(strcmp(temp_buffer,"0x00") == 0){
+        	if (G_MUTEX)
 				pthread_mutex_lock(&lock);
         	
-			printf("ready list\n");
-			list(fd);
+        	printf("ready list\n");
+        	list(fd);
         	
-			if (G_MUTEX)
-    				pthread_mutex_unlock(&lock);
-			memset( buffer,'\0', sizeof(buffer) );
-    			continue;
-		}
-		if(strcmp(temp_buffer,"0x04") == 0){
-			if (G_MUTEX)
+        	if (G_MUTEX)
+    			pthread_mutex_unlock(&lock);
+        	memset( buffer,0, sizeof(buffer) );
+    		continue;
+        }
+        if(strcmp(temp_buffer,"0x04") == 0){
+        	if (G_MUTEX)
 				pthread_mutex_lock(&lock);
             
-			printf("ready delete\n");
-			strncpy(temp_buffer,buffer+4,499-4);
-			printf("%s\n",temp_buffer);
-			delete(fd,temp_buffer);
+            printf("ready delete\n");
+            strncpy(temp_buffer,buffer+4,499-4);
+            printf("%s\n",temp_buffer);
+            delete(fd,temp_buffer);
             
-			if (G_MUTEX)
-    				pthread_mutex_unlock(&lock);
-    			memset( buffer,'\0', sizeof(buffer) );
-    			continue;
-		}
-		if(strcmp(temp_buffer,"0x08") == 0){
-			send(newSocket,"0x09",sizeof("0x09"),0);
-			memset( buffer,'\0', sizeof(buffer) );
-			break;
-		}
-		memset( buffer,'\0', sizeof(buffer) );
+            if (G_MUTEX)
+    			pthread_mutex_unlock(&lock);
+    		memset( buffer,0, sizeof(buffer) );
+    		continue;
+        }
+        if(strcmp(temp_buffer,"0x08") == 0){
+            write(newSocket,"0x09",sizeof("0x09"));
+            memset( buffer,0, sizeof(buffer) );
+            break;
+        }
+        memset( buffer,0, sizeof(buffer) );
         
      
 		
         
 	}
-
+	//if (G_MUTEX)
+    //	pthread_mutex_unlock(&lock);
 	close(newSocket);
 	
 }
@@ -384,13 +371,11 @@ void delete(void * fd, char input[]){
 	free(new);
 
 	if(flag == 0){
-		send(newSocket,"0xFF",sizeof("0xFF"),0);
-		return;
-	}
-	else{
-		send(newSocket,"0x05",sizeof("0x05"),0);
-		return;
-	}
+        write(newSocket,"0xFF",sizeof("0xFF"));
+    }
+    else{
+        write(newSocket,"0x05",sizeof("0x05"));
+    }
 
 }
 void list(void *fd){
@@ -419,30 +404,30 @@ void list(void *fd){
 	free(new);
 
 	unsigned int x = counter;
-	unsigned char a[2];
-	a[1] = (x>>8) & 0xFF;
-	a[0] = x & 0xFF;
-	if(send(newSocket,"0x01",sizeof("0x01"),0) < 0){
-		return;
-	}
-	if(send(newSocket,a,2,0) < 0)
-	{
-		perror("Send list size Failed:"); 
-		exit(1);
-	}
-	i = 0;
-	while(counter>0){
+    unsigned char a[2];
+    a[1] = (x>>8) & 0xFF;
+    a[0] = x & 0xFF;
+    if(write(newSocket,"0x01",sizeof("0x01")) < 0){
+        write(newSocket,"0xFF",sizeof("0xFF"));
+    }
+    if(write(newSocket,a,2) < 0)
+    {
+        perror("Send list size Failed:"); 
+        exit(1);
+    }
+    i = 0;
+    while(counter>0){
         //printf("%s\n",name[counter]);
-		send(newSocket,filename[i],sizeof(filename[i]),0);
-		i += 1;
-		counter -= 1;
-	}
-	return;
+        write(newSocket,filename[i],sizeof(filename[i]));
+        i += 1;
+        counter -= 1;
+    }
+    return;
 }
 void update(void * fd,char input[]){
 	int newSocket=*((int *)fd);
 	char buffer[BUFFER_SIZE];
-	memset(buffer,'\0',sizeof(buffer));
+	memset(buffer,0,sizeof(buffer));
 	
 	printf("%d\n",newSocket);
 	int flag = 0;
@@ -465,48 +450,57 @@ void update(void * fd,char input[]){
 	free(new);
 
 	if(flag == 1){
-    		send(newSocket,"0xFF",sizeof("0xFF"),0);
-    		fprintf(logfile,"duplicate file!\n");
-    		return;
-	}
+    	write(newSocket,"0xFF",sizeof("0xFF"));
+    	return;
+    }
 	unsigned char size[4];
 	int x;
 	unsigned int length;
-	memset(size,'\0',sizeof(size));
+	int counter = 0;
+	memset(size,0,sizeof(size));
 	while((length = read(newSocket, size, sizeof(size))) > 0) 
 	{
+		counter ++;
 		
 		x = *(int *)size;
+		//fprintf(logfile,"size is %d which is %d, counter : %d\n",length,x,counter);
+		//fprintf(logfile,"%x %x %x %x \n",size[3],size[2],size[1],size[0]);
 	 	if(x!=0){
 	 		break;
 	 	}
-	 	memset(size,'\0', sizeof(size) );
+	 	memset(size,0, sizeof(size) );
 	}
-	printf("%d\n",x);
 	char *data;
-	data = (char *)malloc(x);
-	memset(data,'\0',x);
+	data = (char *)malloc((x+1) * sizeof(char));
+	memset(data,0,x+1);
 	int RecvSize=0;
 
 	while(x>0) 
-	{ 
-    		RecvSize = recv(newSocket,data+RecvSize,x,0);
-    		if(RecvSize == -1){
-    			perror("Recieve File Content Failed:"); 
-			send(newSocket,"0xFF",sizeof("0xFF"),0);
-			exit(1);
-    		}
+    { 
+    	RecvSize = recv(newSocket,data+RecvSize,x,0);
+    	if(RecvSize == -1){
+    		perror("Recieve File Content Failed:"); 
+            write(newSocket,"0xFF",sizeof("0xFF"));
+            exit(1);
+    	}
 
-    		x = x- RecvSize;
-	}
-	printf("%s\n",data);
-
+    	x = x- RecvSize;
+    }
+	
+	char *content;
+	//fprintf(logfile,"Data: %s\n",data);
 	char *md5 = convertMD5(data,strlen(data));
 	char *filename;
 	filename = malloc(strlen(input)+1);
 	strcpy(filename,input);
 	addBack(map,input,data,md5);
+	//printf("%s\n",md5);
 
+	
+
+	
+    //char flag[5] = "0x03";
+    
     
 	FILE *fp = fopen(md5, "ab");
 	if (fp != NULL)
@@ -514,14 +508,12 @@ void update(void * fd,char input[]){
 		fputs(data, fp);
 		fclose(fp);
 	}
-	
+	write(newSocket,"0x03",sizeof("0x03"));
     
-	free(md5);
+    free(md5);
 	free(data);
 	free(filename);
-	
 	printf("update end\n");
-	send(newSocket,"0x03",sizeof("0x03"),0);
 	return;
 
 }
@@ -545,11 +537,6 @@ void download(void * fd,char input[]){
 			filename = malloc(1+strlen((map->first)->filename));
 			content = malloc(1+strlen((map->first)->content));
 			md5 = malloc(1+strlen((map->first)->md5));
-			
-			memset(filename,'\0',strlen((map->first)->filename));
-			memset(content,'\0',strlen((map->first)->content));
-			memset(md5,'\0',strlen((map->first)->md5));
-			
 			strcpy(filename,(map->first)->filename);
 			strcpy(content,(map->first)->content);
 			strcpy(md5,(map->first)->md5);
@@ -567,48 +554,47 @@ void download(void * fd,char input[]){
 	printf("%s\n",content);
 
 	if(flag == 1){
-		send(newSocket,"0x07",sizeof("0x07"),0);
+		write(newSocket,"0x07",sizeof("0x07"));
 	}
 	else{
-		send(newSocket,"0xFF",sizeof("0xFF"),0);
-		return;
+		write(newSocket,"0xFF",sizeof("0xFF"));
 	}
 
-	unsigned int num = strlen(content);
-	unsigned int x;
-	unsigned char a[4];
+    unsigned int num = strlen(content);
+    unsigned int x;
+    unsigned char a[4];
 
-	a[3] = (num>>24) & 0xFF;
-	a[2] = (num>>16) & 0xFF;
-	a[1] = (num>>8) & 0xFF;
-	a[0] = num & 0xFF;
-	printf("%x %x %x %x \n",a[3],a[2],a[1],a[0]);
-	x = *(int *)a;
-	printf("%d\n", x);
+    a[3] = (num>>24) & 0xFF;
+    a[2] = (num>>16) & 0xFF;
+    a[1] = (num>>8) & 0xFF;
+    a[0] = num & 0xFF;
+    printf("%x %x %x %x \n",a[3],a[2],a[1],a[0]);
+    x = *(int *)a;
+    printf("%d\n", x);
 
 
-	memset(buffer,'\0',sizeof(buffer));
-	strncpy(buffer,a,4);
-	printf("%s\n",buffer);
-	int SendSize = 0;
-	if(send(newSocket,buffer,4,0) < 0)
-	{
-		perror("Send File size Failed:"); 
-		exit(1);
-	}
+    memset(buffer,0,sizeof(buffer));
+    strncpy(buffer,a,4);
+    printf("%s\n",buffer);
+    int SendSize = 0;
+    if(write(newSocket,buffer,4) < 0)
+    {
+        perror("Send File size Failed:"); 
+        exit(1);
+    }
     
-	while (num>0){
-		SendSize = send(newSocket,content + SendSize,num,0);
-		if(SendSize == -1){
-			perror("Send File Content Failed:"); 
-			exit(1);
-		}
-		num = num-SendSize;
-	}
-	free(filename);
-	free(content);
-	free(md5);
-	return;   
+    while (num>0){
+        SendSize = send(newSocket,content + SendSize,num,0);
+        if(SendSize == -1){
+            perror("Send File Content Failed:"); 
+            exit(1);
+        }
+        num = num-SendSize;
+    }
+    free(filename);
+    free(content);
+    free(md5);
+    return;   
 }
 char *convertMD5(const char *str,int length){
 	int n;
@@ -664,13 +650,15 @@ int updatexml(char filename[],const char* md5){
 	return 1;
 }
 void readxml(){
-    xmlDocPtr doc;           
-    xmlNodePtr curNode;      
-    xmlChar *szKey;          
+ 	xmlDocPtr doc;           //定义解析文件指针
+    xmlNodePtr curNode;      //定义结点指针
+    xmlChar *szKey;          //临时字符串变量
     
     rename(".dedup","repository.xml");
     doc = xmlReadFile("repository.xml","GB2312",XML_PARSE_RECOVER);
-    printf("readxml\n");
+    //解析文件
+    //检查解析文档是否成功，如果不成功，libxml将报错并停止解析。
+    //一个常见错误是不适当的编码，XML标准文档除了用UTF-8或UTF-16外还可用其它编码保存
     if (NULL == doc) {
         fprintf(stderr,"Document not parsed successfully.");
         return;
@@ -686,65 +674,46 @@ void readxml(){
     xmlNodePtr propNodePtr = curNode;
     xmlNodePtr tepNode;      //定义结点指针
     
-    char *filename;
-    char *buffer;
-    char *md5;
-    int length;
+    //char *filename;
+    //char *buffer;
+    //char *md5;
+    long length;
     while(curNode != NULL) {
         //取出节点中的内容
         if ((!xmlStrcmp(curNode->name, (const xmlChar *) "file"))) {
             
             tepNode = curNode;
-            curNode = curNode->children->next;
-	    
-	    FILE * f = fopen (xmlNodeGetContent(tepNode->xmlChildrenNode), "r");
-	    printf("%s",xmlNodeGetContent(tepNode->xmlChildrenNode));
-	    
-	    md5 = (char *)malloc(strlen(xmlNodeGetContent(tepNode->xmlChildrenNode))+1);
-	    strcpy(md5,xmlNodeGetContent(tepNode->xmlChildrenNode));
-	    
-	    printf("file open success\n");
-	    fseek (f, 0L, SEEK_END);
-	    length = ftell (f);
-            fseek (f, 0L, SEEK_SET);
-	    buffer = (char *)malloc((length+1)*sizeof(char));
-	    memset(buffer,'\0',length);
-	    fread (buffer, 1, length, f);
-            buffer[length] = '\0';
-            fclose (f);
-	    //memset(buffer,1,length);
+            curNode = curNode->children;
             while(curNode !=NULL){
+                char *buffer;
                 szKey = xmlNodeGetContent(curNode);
-                filename = (char *)malloc(strlen(szKey)+1);
-		if(strcmp(filename,md5) !=0){
-			strcpy(filename,szKey);
-		}
-		else{
-			free(filename);
-			curNode = curNode->next;
-			break;
-		}
-		printf("filename: %s\n",filename);
-		
-		
-		printf("md5 is: %s\n\n",md5);
+                FILE * f = fopen (szKey, "rb");
+
+				if (f)
+				{
+					fseek (f, 0, SEEK_END);
+    				length = ftell (f);
+    				fseek (f, 0, SEEK_SET);
+    				buffer = malloc (length);
+  	 				if (buffer)
+  					{
+    					fread (buffer, 1, length, f);
+  					}
+  					fclose (f);
+				}
+                addBack(map,szKey,buffer,xmlNodeGetContent(tepNode->xmlChildrenNode));
+                free(buffer);
                 
-                addBack(map,filename,buffer,md5);
-                
-		free(filename);
                 curNode = curNode->next;
             }
-	    free(md5);
-	    free(buffer);
             curNode = tepNode;
-	    printf("\n\n\n\n");
+           
             xmlFree(szKey);
         }
         
         curNode = curNode->next;
 
     }
-    int nRel = xmlSaveFile("repository.xml",doc);
+    int nRel = xmlSaveFile("copy.xml",doc);
     xmlFreeDoc(doc);
-    rename("repository.xml",".dedup");
 }
