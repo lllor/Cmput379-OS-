@@ -36,7 +36,7 @@ int updatexml(char filename[],const char *md5);
 void readxml();
 void download(void * fd,char input[]);
 void list(void * fd);
-void update(void * fd,char input[]);
+int update(void * fd,char input[]);
 void delete(void * fd,char input[]);
 //void createxml(char filename[], char *content);
 
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 	
 	struct stat st = {0};							//check the directory, if it already exist,just leave it else creat it
 	int ret = stat(argv[1], &st);
-	printf("%d\n",ret);
+	//printf("%d\n",ret);
 	if (ret == -1) {
 		mkdir(argv[1], 0700);
 	}
@@ -263,7 +263,7 @@ void *net_thread(void * fd)
 {
 	//pthread_mutex_lock(&lock);
 	pthread_detach(pthread_self());						//detach the thread
-	
+	int flag;
 	int newSocket=*((int *)fd);
 	
 	printf("%d\n",newSocket);
@@ -295,12 +295,18 @@ void *net_thread(void * fd)
 			printf("ready update\n");
 			strncpy(temp_buffer,buffer+4,499-4);			//handle the update
 			printf("%s\n",temp_buffer);
-			update(fd,temp_buffer);
+			flag = update(fd,temp_buffer);
+			sleep(5);
 			map_inuse = 0;
 			if (G_MUTEX)						//unlock the queue
     				pthread_mutex_unlock(&lock);
 			memset( buffer,'\0', sizeof(buffer) );			//empty the buffer
-			continue;
+			
+			if(flag == 1){
+				continue;
+			}else{
+				break;
+			}
 		}
 		if(strcmp(temp_buffer,"0x06") == 0){				//if the user want to download a file
 			if (G_MUTEX)
@@ -466,7 +472,7 @@ void list(void *fd){
 	}
 	return;
 }
-void update(void * fd,char input[]){
+int update(void * fd,char input[]){
 	int newSocket=*((int *)fd);
 	char buffer[BUFFER_SIZE];
 	memset(buffer,'\0',sizeof(buffer));
@@ -509,25 +515,37 @@ void update(void * fd,char input[]){
 	char *data;
 	data = (char *)malloc(x);						//malloc enough space
 	memset(data,'\0',x);
+	memset(buffer,'\0',sizeof(buffer));
+	
 	int RecvSize=0;
-
-	while(x>0) 
-	{ 
-    		RecvSize = recv(newSocket,data+RecvSize,x,0);			//read data from client
-    		if(RecvSize == -1){
-    			perror("Recieve File Content Failed:"); 
-			send(newSocket,"0xFF",sizeof("0xFF"),0);
-			exit(1);
-    		}
-
-    		x = x- RecvSize;
+	int alreadyRec=0;
+	
+	while((length = recv(newSocket, buffer, sizeof(buffer),0)) > 0) 
+	{
+		printf("%d\n",length);
+		if(buffer[0]!='\0'){
+			strcat(data, buffer);
+		}
+	 	x=x-length;
+		if(x <= 0){
+			break;
+		}
+		if(length < sizeof(buffer))
+		{
+			break;
+		}
+	 	memset(buffer,'\0', sizeof(buffer) );
 	}
+	printf("%d\n",length);
 	printf("%s\n",data);
-
+	if(length <= 0){
+		return 0;
+	}
+	
 	if(flag	== 1){								//if file alredy exist
     		send(newSocket,"0xFF",sizeof("0xFF"),0);			//return a SERROR
     		fprintf(logfile,"duplicate file!\n");			
-    		return;
+    		return 1;
 	}
 	else{
 		char *md5 = convertMD5(data,strlen(data));				//get the md5
@@ -554,9 +572,9 @@ void update(void * fd,char input[]){
 
 	
 	
-	//printf("update end\n");
+	printf("update end\n");
 	//send(newSocket,"0x03",sizeof("0x03"),0);				//send a confirm to client
-	return;
+	return 1;
 
 }
 void download(void * fd,char input[]){

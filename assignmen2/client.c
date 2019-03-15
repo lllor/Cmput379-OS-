@@ -248,9 +248,12 @@ int updatefile(int sock_desc,char input[])
     data[length] = '\0';
     //printf("%s",data);
     int rest = sz+1;
+    int areadysend = 0;
     
     while(rest > 0){								//send the content
-        SendSize = send(sock_desc,data + SendSize,rest,0);
+        SendSize = send(sock_desc,data + areadysend,1024,0);
+        //printf("%d\n",SendSize);
+        areadysend+=SendSize;
         if(SendSize == -1){
             perror("Send File Content Failed:"); 
             exit(1);
