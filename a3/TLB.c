@@ -4,6 +4,8 @@
 
 int findAddr(unsigned int address, int pageNum[], int length);
 void updatePageNumFIFO(unsigned int address, int *pageNum);
+void clearAll(int *pageNum,int length);
+void updatePageNumLRC(unsigned int address, int *pageNum, int length, int hit);
 
 int main(int argc, char *argv[]) {
     int ignoreI = 0;
@@ -44,10 +46,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    int pageNumber[tlbsize];
-    for(int i = 0; i < tlbsize; i++) {
-        pageNumber[i] = -1;
-    }
+    int *pageNumber = malloc(tlbsize*sizeof(int));
+    clearAll(pageNumber, tlbsize);
 
     char buf[100] = {0};
     char addr_str[9] = {0};
@@ -60,10 +60,17 @@ int main(int argc, char *argv[]) {
         if(buf[0] == '=') {
             continue;
         }
+        if(ignoreI == 1) {
+            if(buf[0] == 'I') {
+                continue;
+            }
+        }
+        //printf("%d\n",buf[1]);
         strncpy(addr_str,buf+3,8);
         sscanf(addr_str,"%x",&addr);
         addr = addr >> pgsize;
-        if(findAddr(addr,pageNumber,tlbsize)) {
+        int result = findAddr(addr,pageNumber,tlbsize);
+        if(result != 0) {
             hit++;
         }
         else {
@@ -73,26 +80,49 @@ int main(int argc, char *argv[]) {
                 position = (position+1) % tlbsize;
             }
         }
+        //printf("%d\n",position);
         if(policy == 1) {
-            //updatePageNumLRC();
+            updatePageNumLRC(addr,&pageNumber[0],tlbsize,result);
         }
         memset(buf,0,100);
     }
+    printf("%d %d\n",hit, miss);
+    free(pageNumber);
 }
 
 int findAddr(unsigned int address, int pageNum[], int length) {
     for(int i = 0; i < length; i++) {
         if(pageNum[i] == address){
-            return 1;
+            return i;
         }
     }
     return 0;
+}
+
+void clearAll(int *pageNum,int length) {
+    for(int i = 0; i < length; i++) {
+        pageNum[i] = -1;
+    }
 }
 
 void updatePageNumFIFO(unsigned int address, int *pageNum) {
     *pageNum = address;
 }
 
-// int updatePageNumLRC() {
-
-// }
+void updatePageNumLRC(unsigned int address, int *pageNum, int length, int hit) {
+    if(hit != 0) {
+        unsigned int temp = pageNum[hit];
+        for(int i = hit; i < length; i++) {
+            if(pageNum[i] == -1) {
+                pageNum[i-1] = temp;
+            }
+            pageNum[i] = pageNum[i+1];
+        }
+    }
+    else {
+        for(int i = 0;i < length-1; i++) {
+            pageNum[i] = pageNum[i+1];
+        }
+        pageNum[length-1] = address;
+    }
+}
