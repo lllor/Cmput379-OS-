@@ -115,12 +115,21 @@ void dealLRU(int pgsize,int tlbsize,int flushPeriod, int ignoreI){
         {
 	    
             if(pp->next == NULL){
+	        result = 0;
 	        break;
 	    }
+	    if(TLB->first->pagenum == addr){
+                leaveFront(TLB);
+                addBack(TLB,addr);
+                break;
+            }
+            if(TLB->last->pagenum == addr){
+                break;
+            }
 	    tep = pp->next;
-	    if(pp->pagenum == addr){
+	    if(tep->pagenum == addr){
                 pp->next = tep->next;
-                temp->next = NULL;
+                tep->next = NULL;
                 addBack(TLB,addr);
                 free(tep);
                 result = 1;
@@ -139,8 +148,11 @@ void dealLRU(int pgsize,int tlbsize,int flushPeriod, int ignoreI){
             miss++;
 	    TLB_size += 1;
             if (TLB_size > tlbsize){
-                leaveFront(TLB);
-                addBack(TLB,addr);
+                //leaveFront(TLB);
+                struct Node *temp = TLB -> first;
+		temp = temp->next;
+                TLB->first = temp;
+		addBack(TLB,addr);
             }
             else{
                 addBack(TLB,addr);
