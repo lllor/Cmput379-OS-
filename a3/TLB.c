@@ -158,13 +158,12 @@ void dealFIFO(int pgsize,int tlbsize,int flushPeriod, int ignoreI){
     int addr_count = 0;
     int result = 0;
     int offset = 4;
-
     for(;offset <= 16; offset++) {
         if(pow(2.0,(double)offset) == pgsize) {
             break;
         }
     }
-    printf("%d\n",offset);
+   // printf("%d\n",offset);
     while(fgets(buf,sizeof(buf),stdin)) {
         if(buf[0] == '=') {
             continue;
@@ -174,6 +173,7 @@ void dealFIFO(int pgsize,int tlbsize,int flushPeriod, int ignoreI){
                 continue;
             }
         }
+    
         addr_count += 1;
         if(addr_count == flushPeriod){
             nuke(TLB);
@@ -199,8 +199,9 @@ void dealFIFO(int pgsize,int tlbsize,int flushPeriod, int ignoreI){
             hit++;
         }
         else {
+	    TLB_size += 1;
             miss++;
-            if (TLB_size >= tlbsize){
+            if (TLB_size > tlbsize){
                 leaveFront(TLB);
                 addBack(TLB,addr);
             }
