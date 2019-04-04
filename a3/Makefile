@@ -1,11 +1,11 @@
 valtlb379: TLB.o
-	gcc -g -o valtlb379 TLB.o
+	gcc -g -o valtlb379 TLB.o -lm
 	gcc -g -o heapsort heapsort.c
 	gcc -g -o mergesort mergesort.c
 	gcc -g -o quicksort quicksort.c
 
 TLB.o: TLB.c
-	gcc -g -c TLB.c
+	gcc -g -c TLB.c -lm
 
 
 
