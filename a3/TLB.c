@@ -121,10 +121,12 @@ void dealLRU(int pgsize,int tlbsize,int flushPeriod, int ignoreI){
 	    if(TLB->first->pagenum == addr){
                 leaveFront(TLB);
                 addBack(TLB,addr);
+                result = 1;
                 break;
             }
             if(TLB->last->pagenum == addr){
-                break;
+                result = 1;
+		break;
             }
 	    tep = pp->next;
 	    if(tep->pagenum == addr){
