@@ -4,8 +4,10 @@
 #include "linklist.h"
 #include <math.h>
 
-int dealFIFO(Linklist *TLB, unsigned int addr);
-int dealLRU(Linklist *TLB, unsigned int addr);
+int dealFIFO1addr(Linklist *TLB, unsigned int addr);
+int dealFIFO2addr(Linklist *TLB, unsigned int addr1, unsigned int addr2);
+int dealLRU2addr(Linklist *TLB, unsigned int addr1, unsigned int addr2);
+int dealLRU1addr(Linklist *TLB, unsigned int addr1);
 
 int main(int argc, char *argv[]) {
     int ignoreI = 0;
@@ -78,14 +80,9 @@ int main(int argc, char *argv[]) {
                 continue;
             }
         }
-
         char *ptr = strtok(buf,delim);
         int size = atoi(strtok(NULL,delim));
         addr_count += 1;
-        if(addr_count == flushPeriod){
-            nuke(TLB);
-            addr_count = 0;
-        }
         
         strncpy(addr_str,buf+3,8);
         sscanf(addr_str,"%x",&addr1);
@@ -94,87 +91,193 @@ int main(int argc, char *argv[]) {
         addr2 = addr2 >> offset;
         
         if (policy == 0){
-            result = dealFIFO(TLB,addr1);
-        }
-        else{
-            result = dealLRU(TLB,addr1);
-        }
-
-        if(result != 0) {
-            hit++;
-        }
-        else {
-            miss++;
-            TLB_size += 1;
-            if (TLB_size > tlbsize){
-                leaveFront(TLB);
-                addBack(TLB,addr1);
-            }
-            else{
-                addBack(TLB,addr1);
-            }
-        }
-
-        if(addr1 != addr2) {
-            addr_count++;
-            if (policy == 0){
-                result = dealFIFO(TLB,addr2);
-            }
-            else{
-                result = dealLRU(TLB,addr2);
-            }
-
-            if(result != 0) {
-                hit++;
+            if(addr1 == addr2) {
+                result = dealFIFO1addr(TLB,addr1);
             }
             else {
-                miss++;
-                TLB_size += 1;
-                if (TLB_size > tlbsize){
-                    leaveFront(TLB);
-                    addBack(TLB,addr2);
-                }
-                else{
-                    addBack(TLB,addr2);
-                }
+                addr_count++;
+                result = dealFIFO2addr(TLB,addr1,addr2);
+            }
+        }
+        else{
+            if(addr1 == addr2) {
+                result = dealLRU1addr(TLB,addr1);
+            }
+            else {
+                addr_count++;
+                result = dealLRU2addr(TLB,addr1,addr2);
             }
         }
 
+        //printf("%d ",addr1 == addr1);
+        //printf("%x %x %d\n",addr1, addr2, result);
+
+        if(result == 0) {
+            miss+=2;
+            TLB_size += 2;
+            if(TLB_size > tlbsize){
+                leaveFront(TLB);
+                addBack(TLB,addr1);
+                TLB_size -= 1;
+            }
+            else{
+                addBack(TLB,addr1);
+            }
+
+            if(TLB_size > tlbsize){
+                leaveFront(TLB);
+                addBack(TLB,addr2);
+                TLB_size -= 1;
+            }
+            else{
+                addBack(TLB,addr2);
+            }
+        }
+        else if(result == 1) {
+            hit++;
+            miss++;
+            TLB_size++;
+            if(TLB_size > tlbsize){
+                leaveFront(TLB);
+                addBack(TLB,addr2);
+                TLB_size -= 1;
+            }
+            else{
+                addBack(TLB,addr2);
+            }
+        }
+        else if(result == 2){
+            hit++;
+            miss++;
+            TLB_size++;
+            if(TLB_size > tlbsize){
+                leaveFront(TLB);
+                addBack(TLB,addr1);
+                TLB_size -= 1;
+            }
+            else{
+                addBack(TLB,addr1);
+            }
+        }
+        else if(result == 3){
+            hit+=2;
+        }
+        else if(result == 4){
+            miss++;
+            TLB_size++;
+            if(TLB_size > tlbsize){
+                leaveFront(TLB);
+                addBack(TLB,addr1);
+                TLB_size -= 1;
+            }
+            else{
+                addBack(TLB,addr1);
+            }
+        }
+        else if(result == 5){
+            hit++;
+        }
+
+        if(flushPeriod != 0 && addr_count >= flushPeriod){
+            nuke(TLB);
+            addr_count -= flushPeriod;
+            //printf("flush %d\n", flushPeriod);
+        }
+        //printf("%d\n",addr_count);
         memset(buf,0,100);
         result = 0;
     }
-    printf("%d %d %d\n",addr_count, hit, miss);
+    printf("%d %d %d\n", hit + miss , hit, miss);
     destroy(&TLB);
 }
 
 
-int dealLRU(Linklist *TLB, unsigned int addr){
+int dealLRU2addr(Linklist *TLB, unsigned int addr1, unsigned int addr2){
     struct Node *pp=TLB->first;              //begin with the first element
     struct Node *tep=TLB->first;
     int result = 0;
+
+    if(isEmpty(TLB)){
+        return result;
+    }
+
+    if(TLB->first->pagenum == addr1){
+        leaveFront(TLB);
+        addBack(TLB,addr1);
+        result += 1;
+    }
+    else if(TLB->last->pagenum == addr1){
+        result += 1;
+    }
+
+    if(TLB->first->pagenum == addr2){
+        leaveFront(TLB);
+        addBack(TLB,addr2);
+        result += 2;
+    }
+    else if(TLB->last->pagenum == addr2){
+        result += 2;
+    }
+
     while(pp!=NULL)                          //til the end
     {
-        if(pp->next == NULL){
-            result = 0;
+        if(pp->next == NULL || result == 3){
             break;
         }
-        if(TLB->first->pagenum == addr){
-            leaveFront(TLB);
-            addBack(TLB,addr);
-            result = 1;
-            break;
-        }
-        if(TLB->last->pagenum == addr){
-            result = 1;
-            break;
-        }
+
         tep = pp->next;
-        if(tep->pagenum == addr){
+        if(tep->pagenum == addr1 && result != 1){
             pp->next = tep->next;
             tep->next = NULL;
-            addBack(TLB,addr);
+            addBack(TLB,addr1);
             free(tep);
-            result = 1;
+            result += 1;
+        }
+        else if(tep->pagenum == addr2 && result != 2) {
+            pp->next = tep->next;
+            tep->next = NULL;
+            addBack(TLB,addr2);
+            free(tep);
+            result += 2;
+        }
+        pp=pp->next;
+    }
+    return result;
+}
+
+int dealLRU1addr(Linklist *TLB, unsigned int addr1) {
+    struct Node *pp=TLB->first;              //begin with the first element
+    struct Node *tep=TLB->first;
+    int result = 4;
+
+    if(isEmpty(TLB)){
+        return result;
+    }
+
+    if(TLB->first->pagenum == addr1){
+        leaveFront(TLB);
+        addBack(TLB,addr1);
+        result += 1;
+        return result;
+    }
+    else if(TLB->last->pagenum == addr1){
+        result += 1;
+        return result;
+    }
+
+    while(pp!=NULL)                          //til the end
+    {
+        if(pp->next == NULL || result == 5){
+            break;
+        }
+
+        tep = pp->next;
+        if(tep->pagenum == addr1){
+            pp->next = tep->next;
+            tep->next = NULL;
+            addBack(TLB,addr1);
+            free(tep);
+            result += 1;
             break;
         }
         pp=pp->next;
@@ -183,14 +286,37 @@ int dealLRU(Linklist *TLB, unsigned int addr){
 }
 
 
-int dealFIFO(Linklist *TLB, unsigned int addr){
-    int result = 0;
+int dealFIFO1addr(Linklist *TLB, unsigned int addr){
+    int result = 4;
     struct Node *pp=TLB->first;              //begin with the first element
     while(pp!=NULL)                          //til the end
     {
         if(pp->pagenum == addr){
-            result = 1;
+            result += 1;
             break;
+        }
+        pp=pp->next;
+    }
+    return result;
+}
+
+int dealFIFO2addr(Linklist *TLB, unsigned int addr1, unsigned int addr2){
+    int result = 0;
+    struct Node *pp=TLB->first;              //begin with the first element
+    if(isEmpty(TLB)) {
+        return result;
+    }
+
+    while(pp!=NULL)                          //til the end
+    {
+        if(result == 3) {
+            break;
+        }
+        if(pp->pagenum == addr1) {
+            result += 1;
+        }
+        else if(pp->pagenum == addr2) {
+            result += 2;
         }
         pp=pp->next;
     }
