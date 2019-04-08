@@ -57,6 +57,7 @@ int main(int argc, char *argv[]) {
     char addr_str[9] = {0};
     unsigned int addr1;
     unsigned int addr2;
+    unsigned int addr3;
     int position = 0;
     int hit = 0;
     int miss = 0;
@@ -66,6 +67,7 @@ int main(int argc, char *argv[]) {
     int offset = 4;
     char delim[] = ",";
     int total_reference = 0;
+    int flag = 0;
 
     for(;offset <= 16; offset++) {
         if(pow(2, offset) == pgsize) {
@@ -85,13 +87,22 @@ int main(int argc, char *argv[]) {
         char *ptr = strtok(buf,delim);
         int size = atoi(strtok(NULL,delim));
         addr_count += 1;
-        
+        if(addr_count == flushPeriod){
+        	flag = 1;
+        }
+        else{
+        	flag = 0;
+        }
         strncpy(addr_str,buf+3,8);
         sscanf(addr_str,"%x",&addr1);
         addr2 = addr1+size;
         addr1 = addr1 >> offset;
         addr2 = addr2 >> offset;
+        addr3 = addr2;
         
+        if(flag == 1){
+        	addr2=addr1;
+        }
         if (policy == 0){
             if(addr1 == addr2) {
                 total_reference += 1;
@@ -179,9 +190,23 @@ int main(int argc, char *argv[]) {
             else{
                 addBack(TLB,addr1);
             }
+            if (flag == 1){
+            	nuke(TLB);
+            	addr_count -= flushPeriod;
+            	addBack(TLB,addr3);
+            	addr_count += 1;
+            }
+            
         }
         else if(result == 5){
             hit++;
+            if(flag == 1){
+            	nuke(TLB);
+            	addr_count -= flushPeriod;
+            	addBack(TLB,addr3);
+            	addr_count += 1;
+            }
+            
         }
 
         if(flushPeriod != 0 && addr_count >= flushPeriod){
@@ -194,7 +219,7 @@ int main(int argc, char *argv[]) {
         memset(buf,0,100);
         result = 0;
     }
-    printf("%d %d %d\n", hit + miss , hit, miss);
+    printf("%d %d %d", hit + miss , hit, miss);
     fclose(fp);
     destroy(&TLB);
 }
