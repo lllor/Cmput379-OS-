@@ -15,8 +15,9 @@ int main(int argc, char *argv[]) {
     int policy = -1;
     int pgsize = 0;
     int tlbsize = 0;
-
-    
+    FILE *fp;
+    fp = fopen("table.csv","w");
+    fprintf(fp,"%s,%s,%s\n","total","hit","miss");
     if(argc < 5 || argc > 8) {
         exit(1);
     }
@@ -64,6 +65,7 @@ int main(int argc, char *argv[]) {
     int result = 0;
     int offset = 4;
     char delim[] = ",";
+    int total_reference = 0;
 
     for(;offset <= 16; offset++) {
         if(pow(2, offset) == pgsize) {
@@ -92,18 +94,22 @@ int main(int argc, char *argv[]) {
         
         if (policy == 0){
             if(addr1 == addr2) {
+                total_reference += 1;
                 result = dealFIFO1addr(TLB,addr1);
             }
             else {
+                total_reference += 2;
                 addr_count++;
                 result = dealFIFO2addr(TLB,addr1,addr2);
             }
         }
         else{
             if(addr1 == addr2) {
+                total_reference += 1;
                 result = dealLRU1addr(TLB,addr1);
             }
             else {
+                total_reference += 2;
                 addr_count++;
                 result = dealLRU2addr(TLB,addr1,addr2);
             }
@@ -183,11 +189,13 @@ int main(int argc, char *argv[]) {
             addr_count -= flushPeriod;
             //printf("flush %d\n", flushPeriod);
         }
+        fprintf(fp,"%d,%d,%d\n",total_reference,hit,miss);
         //printf("%d\n",addr_count);
         memset(buf,0,100);
         result = 0;
     }
     printf("%d %d %d\n", hit + miss , hit, miss);
+    fclose(fp);
     destroy(&TLB);
 }
 
