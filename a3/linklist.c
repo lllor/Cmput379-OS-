@@ -66,7 +66,6 @@ int leaveFront(Linklist *linklist){
 
 void removeCurrent(Linklist *linklist, int pagenum)
 {
-    int count = 0;
     struct Node *pp = linklist->first;
     struct Node *temp = linklist->first;
     if(isEmpty(linklist)) {
@@ -97,6 +96,15 @@ void removeCurrent(Linklist *linklist, int pagenum)
         pp = pp->next;
     }
     linklist->size--;
+}
+
+void displayLink(Linklist *linklist) {
+    struct Node *temp = linklist->first;
+    while(temp != NULL) {
+        printf("%d ",temp->pagenum);
+        temp = temp->next;
+    }
+    printf("\n");
 }
 
 void nuke(Linklist *linklist)

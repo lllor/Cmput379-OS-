@@ -5,8 +5,8 @@
 #include <math.h>
 #include "hashtable.h"
 
-int dealLRU2addr(Linklist *TLB, hashtable *t, unsigned int addr1, unsigned int addr2, int maxSize);
-int dealLRU1addr(Linklist *TLB, hashtable *t, unsigned int addr, int maxSize);
+int dealLRU2addr(Linklist *TLB, unsigned int addr1, unsigned int addr2, int maxSize);
+int dealLRU1addr(Linklist *TLB, unsigned int addr1, int maxSize);
 int dealFIFO1addr(Linklist *TLB, hashtable *t, unsigned int addr, int maxSize);
 int dealFIFO2addr(Linklist *TLB, hashtable *t, unsigned int addr1, unsigned int addr2, int maxSize);
 
@@ -112,35 +112,35 @@ int main(int argc, char *argv[]) {
         }
         else {
             if(addr1 == addr2) {
-                result = dealLRU1addr(TLB, table, addr1, tlbsize);
+                result = dealLRU1addr(TLB, addr1, tlbsize);
             }
             else {
-                result = dealLRU2addr(TLB, table, addr1, addr2, tlbsize);
+                result = dealLRU2addr(TLB, addr1, addr2, tlbsize);
                 addr_count++;
                 total_reference++;
             }
         }
 
         if(result == 0){
-            hit += 2-flag;
-            miss += flag;
+            miss += 2;
         }
         else if(result == 1) {
+            hit++;
+            miss++;
+        }
+        else if(result == 2) {
             hit += 1 - flag;
             miss += 1 + flag;
         }
-        else if(result == 2) {
-            hit++;
-            miss++;
-        }
         else if(result == 3) {
-            miss += 2;
+            hit += 2-flag;
+            miss += flag;
         }
         else if(result == 4) {
-            hit++;
+            miss++;
         }
         else if(result == 5) {
-            miss++;
+            hit++;
         }
 
         if(flushPeriod != 0 && addr_count >= flushPeriod) {
@@ -163,54 +163,124 @@ int main(int argc, char *argv[]) {
 }
 
 
-int dealLRU2addr(Linklist *TLB, hashtable *t, unsigned int addr1, unsigned int addr2, int maxSize){
+int dealLRU2addr(Linklist *TLB, unsigned int addr1, unsigned int addr2, int maxSize) {
+    struct Node *pp=TLB->first;              //begin with the first element
+    struct Node *tep=TLB->first;
     int result = 0;
-    if(!search(addr1, t)) {
-        while(TLB->size >= maxSize) {
-            int temp = leaveFront(TLB);
-            deleteItem(temp, t);
-        }
+
+    if(isEmpty(TLB)){
         addBack(TLB,addr1);
-        insert(addr1,t);
-        result += 1;
-    }
-    else {
-        removeCurrent(TLB, addr1);
-        addBack(TLB, addr1);
+        addBack(TLB,addr2);
+        return result;
     }
 
-    if(!search(addr2, t)) {
-        while(TLB->size >= maxSize) {
-            int temp = leaveFront(TLB);
-            deleteItem(temp, t);
-        }
+    if(TLB->first->pagenum == addr1){
+        leaveFront(TLB);
+        addBack(TLB,addr1);
+        result += 1;
+    }
+    else if(TLB->last->pagenum == addr1){
+        result += 1;
+    }
+
+    if(TLB->first->pagenum == addr2){
+        leaveFront(TLB);
         addBack(TLB,addr2);
-        insert(addr2,t);
         result += 2;
     }
-    else {
-        removeCurrent(TLB, addr2);
-        addBack(TLB, addr2);
+    else if(TLB->last->pagenum == addr2){
+        result += 2;
+    }
+
+    while(pp!=NULL)                          //til the end
+    {
+        if(pp->next == NULL || result == 3){
+            break;
+        }
+
+        tep = pp->next;
+        if(tep->pagenum == addr1 && result != 1){
+            pp->next = tep->next;
+            tep->next = NULL;
+            addBack(TLB,addr1);
+            free(tep);
+            result += 1;
+        }
+        else if(tep->pagenum == addr2 && result != 2) {
+            pp->next = tep->next;
+            tep->next = NULL;
+            addBack(TLB,addr2);
+            free(tep);
+            result += 2;
+        }
+        pp=pp->next;
+    }
+
+    if(result == 0) {
+        addBack(TLB,addr1);
+        addBack(TLB,addr2);
+    }
+    else if(result == 1){
+        addBack(TLB,addr2);
+    }
+    else if(result == 2){
+        addBack(TLB,addr1);
+    }
+
+    while(TLB->size > maxSize) {
+        leaveFront(TLB);
     }
 
     return result;
 }
 
-int dealLRU1addr(Linklist *TLB, hashtable *t, unsigned int addr, int maxSize) {
+int dealLRU1addr(Linklist *TLB, unsigned int addr1, int maxSize) {
+    struct Node *pp=TLB->first;              //begin with the first element
+    struct Node *tep=TLB->first;
     int result = 4;
-    if(!search(addr, t)) {
-        while(TLB->size >= maxSize) {
-            int temp = leaveFront(TLB);
-            deleteItem(temp, t);
-        }
-        addBack(TLB,addr);
-        insert(addr,t);
+
+    if(isEmpty(TLB)){
+        addBack(TLB,addr1);
+        return result;
+    }
+
+    if(TLB->first->pagenum == addr1){
+        leaveFront(TLB);
+        addBack(TLB,addr1);
         result += 1;
+        return result;
     }
-    else {
-        removeCurrent(TLB,addr);
-        addBack(TLB,addr);
+    else if(TLB->last->pagenum == addr1){
+        result += 1;
+        return result;
     }
+
+    while(pp!=NULL)                          //til the end
+    {
+        if(pp->next == NULL || result == 5){
+            break;
+        }
+
+        tep = pp->next;
+        if(tep->pagenum == addr1){
+            pp->next = tep->next;
+            tep->next = NULL;
+            addBack(TLB,addr1);
+            free(tep);
+            result += 1;
+            break;
+        }
+        pp=pp->next;
+    }
+
+    if(result == 4){
+        addBack(TLB,addr1);
+    }
+
+    while(TLB->size > maxSize) {
+        leaveFront(TLB);
+    }
+
     return result;
 }
 
@@ -228,6 +298,8 @@ int dealFIFO1addr(Linklist *TLB, hashtable *t, unsigned int addr, int maxSize){
             addBack(TLB,addr);
             insert(addr,t);
         }
+    }
+    else {
         result += 1;
     }
     return result;
@@ -246,6 +318,8 @@ int dealFIFO2addr(Linklist *TLB, hashtable *t, unsigned int addr1, unsigned int 
             addBack(TLB,addr1);
             insert(addr1,t);
         }
+    }
+    else {
         result += 1;
     }
 
@@ -260,6 +334,8 @@ int dealFIFO2addr(Linklist *TLB, hashtable *t, unsigned int addr1, unsigned int 
             addBack(TLB,addr2);
             insert(addr2,t);
         }
+    }
+    else {
         result += 2;
     }
 
