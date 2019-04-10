@@ -1,0 +1,6 @@
+==26324== Lackey, an example Valgrind tool
+==26324== Copyright (C) 2002-2015, and GNU GPL'd, by Nicholas Nethercote.
+==26324== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==26324== Command: ./heapsort
+==26324== 
+I  04000c30,3
