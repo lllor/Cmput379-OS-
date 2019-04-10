@@ -14,6 +14,5 @@ void initLinklist(Linklist **linklist);
 int leaveFront(Linklist *linklist);
 void addBack(Linklist *linklist, int pagenum);
 void removeCurrent(Linklist *linklist, int pagenum);
-void displayLink(Linklist *linklist);
 void nuke(Linklist *linklist);
 void destroy(Linklist **linklist);

@@ -63,11 +63,11 @@ void insert(int key, hashtable *table) {
 
 void deleteItem(int key, hashtable *table) {
 
-    //get the hash 
-    int hashIndex = hashcode(key, table);
+   //get the hash 
+   int hashIndex = hashcode(key, table);
 
-    //move in array until an empty
-    if(table->hasharray[hashIndex] != NULL) {
+   //move in array until an empty
+   if(table->hasharray[hashIndex] != NULL) {
         int size = table->hasharray[hashIndex][0];
         
         int j = 1;
@@ -88,6 +88,9 @@ void deleteItem(int key, hashtable *table) {
             free(table->hasharray[hashIndex]);
             table->hasharray[hashIndex] = NULL;
         }
+        
+
+        
    }            
 }
 
