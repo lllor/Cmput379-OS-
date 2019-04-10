@@ -159,6 +159,7 @@ int main(int argc, char *argv[]) {
     printf("%llu\n%llu\n%llu\n", total_reference , hit, miss);
     fclose(fp);
     destroy(&TLB);
+    destroy_hash(&table);
 }
 
 

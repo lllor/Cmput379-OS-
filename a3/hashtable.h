@@ -12,3 +12,4 @@ void insert(int key, hashtable *table);
 void deleteItem(int key, hashtable *table);
 void deleteAll(hashtable *table);
 void display(hashtable *table);
+void destroy_hash(hashtable ** table);

@@ -9,7 +9,7 @@ void initHashtable(hashtable ** table, int Tsize){
     (*table)->size = Tsize;
     (*table)->hasharray = malloc(Tsize*sizeof(int **));
     for(int i = 0; i < Tsize; i++) {
-        (*table)->hasharray[i] = malloc(sizeof(int *));
+        //(*table)->hasharray[i] = malloc(sizeof(int *));
         (*table)->hasharray[i] = NULL;
     }
 }
@@ -43,7 +43,6 @@ bool search(int key, hashtable *table) {
 void insert(int key, hashtable *table) {
     //get the hash 
     int hashIndex = hashcode(key,table);
-    int* new;
     //move in array until an empty or deleted cell
     if(table->hasharray[hashIndex] != NULL && table->hasharray[hashIndex][0] != 0) {
        // int size = table->hasharray[hashIndex][0];
@@ -52,9 +51,7 @@ void insert(int key, hashtable *table) {
         table->hasharray[hashIndex] = realloc(table->hasharray[hashIndex],sizeof(int)*(2+size));
         table->hasharray[hashIndex][size+1] = key;
         table->hasharray[hashIndex][0] = size+1;
-        //size = (sizeof(table->hasharray[hashIndex])/sizeof(int));
-       // printf("%d\n\n",size);
-        //table->hasharray[hashIndex]=new;
+
     }
     else{
         table->hasharray[hashIndex] = malloc(sizeof(int)*2);
@@ -72,21 +69,23 @@ void deleteItem(int key, hashtable *table) {
    //move in array until an empty
    if(table->hasharray[hashIndex] != NULL) {
         int size = table->hasharray[hashIndex][0];
-        int *new_data = malloc((size)*sizeof(int));
+        
         int j = 1;
-        new_data[0] = size;
+        
         if(size>1){
+            int *new_data = malloc((size)*sizeof(int));
+            new_data[0] = size;
             for(int i = 1; i<=size;i++){
               if(table->hasharray[hashIndex][i] != key){
                   new_data[j] = table->hasharray[hashIndex][i];
                   j+=1;
               }
             }
-            //free(table->hasharray[hashIndex]);
+            free(table->hasharray[hashIndex]);
             table->hasharray[hashIndex] = new_data;
         }
         else{
-            //free(table->hasharray[hashIndex]);
+            free(table->hasharray[hashIndex]);
             table->hasharray[hashIndex] = NULL;
         }
         
@@ -97,11 +96,18 @@ void deleteItem(int key, hashtable *table) {
 
 void deleteAll(hashtable *table) {
   for(int i = 0; i < table->size; i++) {
-      //free(table->hasharray[i]);
+      free(table->hasharray[i]);
       table->hasharray[i] = NULL;
   }
 }
-
+void destroy_hash(hashtable ** table){
+    for(int i = 0; i < (*table)->size; i++) {
+      free((*table)->hasharray[i]);
+  }
+    free((*table)->hasharray);
+    free(*table);
+    //free(table);
+}
 void display(hashtable *table) {
   for(int i = 0; i < table->size; i++) {
       if(table->hasharray[i] != NULL) {
