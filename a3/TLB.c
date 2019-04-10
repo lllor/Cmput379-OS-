@@ -166,16 +166,12 @@ int main(int argc, char *argv[]) {
 int dealLRU2addr(Linklist *TLB, hashtable *t, unsigned int addr1, unsigned int addr2, int maxSize){
     int result = 0;
     if(!search(addr1, t)) {
-        if(TLB->size >= maxSize) {
+        while(TLB->size >= maxSize) {
             int temp = leaveFront(TLB);
             deleteItem(temp, t);
-            addBack(TLB, addr1);
-            insert(addr1,t);
         }
-        else {
-            addBack(TLB,addr1);
-            insert(addr1,t);
-        }
+        addBack(TLB,addr1);
+        insert(addr1,t);
         result += 1;
     }
     else {
@@ -184,16 +180,12 @@ int dealLRU2addr(Linklist *TLB, hashtable *t, unsigned int addr1, unsigned int a
     }
 
     if(!search(addr2, t)) {
-        if(TLB->size >= maxSize) {
+        while(TLB->size >= maxSize) {
             int temp = leaveFront(TLB);
             deleteItem(temp, t);
-            addBack(TLB, addr2);
-            insert(addr2,t);
         }
-        else {
-            addBack(TLB,addr2);
-            insert(addr2,t);
-        }
+        addBack(TLB,addr2);
+        insert(addr2,t);
         result += 2;
     }
     else {
@@ -207,16 +199,12 @@ int dealLRU2addr(Linklist *TLB, hashtable *t, unsigned int addr1, unsigned int a
 int dealLRU1addr(Linklist *TLB, hashtable *t, unsigned int addr, int maxSize) {
     int result = 4;
     if(!search(addr, t)) {
-        if(TLB->size >= maxSize) {
+        while(TLB->size >= maxSize) {
             int temp = leaveFront(TLB);
             deleteItem(temp, t);
-            addBack(TLB, addr);
-            insert(addr,t);
         }
-        else {
-            addBack(TLB,addr);
-            insert(addr,t);
-        }
+        addBack(TLB,addr);
+        insert(addr,t);
         result += 1;
     }
     else {
@@ -230,7 +218,7 @@ int dealLRU1addr(Linklist *TLB, hashtable *t, unsigned int addr, int maxSize) {
 int dealFIFO1addr(Linklist *TLB, hashtable *t, unsigned int addr, int maxSize){
     int result = 4;
     if(!search(addr, t)) {
-        if(TLB->size >= maxSize) {
+        if(TLB->size == maxSize) {
             int temp = leaveFront(TLB);
             deleteItem(temp, t);
             addBack(TLB, addr);
