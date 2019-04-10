@@ -1,13 +1,16 @@
-valtlb379: TLB.o
-	gcc -g -o valtlb379 TLB.o -lm
+
+valtlb379: TLB.c hashtable.o linklist.o TLB.o
+	gcc -g -c TLB.c -lm
+	gcc -g -o valtlb379 TLB.o hashtable.o linklist.o -lm
 	gcc -g -o heapsort heapsort.c
 	gcc -g -o mergesort mergesort.c
 	gcc -g -o quicksort quicksort.c
 
-TLB.o: TLB.c
-	gcc -g -c TLB.c -lm
+hashtable.o: hashtable.c hashtable.h
+	gcc -g -c hashtable.c -lm
 
-
+linklist.o: linklist.c linklist.h
+	gcc -g -c linklist.c -lm
 
 clean:
 	rm -f *.o
