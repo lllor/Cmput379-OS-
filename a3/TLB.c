@@ -60,13 +60,13 @@ int main(int argc, char *argv[]) {
     char addr_str[9] = {0};
     unsigned int addr1;
     unsigned int addr2;
-    int hit = 0;
-    int miss = 0;
-    int addr_count = 0;
-    int result = 0;
+    long long int hit = 0;
+    long long int miss = 0;
+    long long int  addr_count = 0;
+    long long int  result = 0;
     int offset = 4;
     char delim[] = ",";
-    int total_reference = 0;
+    long long int total_reference = 0;
 
     for(;offset <= 16; offset++) {
         if(pow(2, offset) == pgsize) {
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
         addr_count += 1;
         total_reference++;
         int flag;
-        if(addr_count == flushPeriod && flushPeriod != 0){
+        if(addr_count == flushPeriod){
             flag = 1;
         }
         else{
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
         addr2 = addr1+size;
         addr1 = addr1 >> offset;
         addr2 = addr2 >> offset;
-
+        
         if(policy == 0) {
             if(addr1 == addr2) {
                 result = dealFIFO1addr(TLB, table, addr1, tlbsize);
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
         memset(buf,0,100);
         result = 0;
     }
-    printf("%d\n%d\n%d\n", total_reference , hit, miss);
+    printf("%llu\n%llu\n%llu\n", total_reference , hit, miss);
     fclose(fp);
     destroy(&TLB);
 }
